@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+
+body{
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+ 
+}
+
+
+::-webkit-scrollbar{width: 8px; height: 8px;}
+::-webkit-scrollbar-thumb{
+  background-color: #347222;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-track{
+  background-color: #f0f0f0;
+}
+
+
+.container{width: 90%;margin: auto}
+
+header .top-strip{
+  background-color: #d0f1b9;
+}
+
+
+.link:hover{
+  color: #18840a;
+  text-shadow: 0 0 18px #506e47;
+}
+
+
+
+
+/* Swiper styles */
+.custom-swiper .swiper-button-next,
+.custom-swiper .swiper-button-prev {
+  @apply w-10 h-10 bg-white rounded-full flex items-center justify-center text-green-700 transition-colors duration-300;
+}
+
+.custom-swiper .swiper-button-next:hover,
+.custom-swiper .swiper-button-prev:hover {
+  @apply bg-green-700 text-white;
+}
+
+.custom-swiper .swiper-button-next::after,
+.custom-swiper .swiper-button-prev::after {
+  font-size: 16px; 
+}
+
+@keyframes slide-fade-in {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-fade-in {
+  animation: slide-fade-in 0.5s cubic-bezier(0.4,0,0.2,1);
+}
