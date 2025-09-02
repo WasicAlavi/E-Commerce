@@ -31,7 +31,7 @@ const Home = () => {
 
 
     useEffect(() => {
-        fetch("${API_BASE_URL}/products/tags/tree")
+        fetch(`${API_BASE_URL}/products/tags/tree`)
             .then(res => res.json())
             .then(data => setCategories(Array.isArray(data) ? data : []));
         
@@ -50,19 +50,19 @@ const Home = () => {
     }, [categories, value]);
 
     useEffect(() => {
-        fetch("${API_BASE_URL}/products/card/highest-discounts?limit=8")
+        fetch(`${API_BASE_URL}/products/card/highest-discounts?limit=8`)
             .then(res => res.json())
             .then(data => setDiscountProducts(Array.isArray(data) ? data : []));
     }, []);
 
     useEffect(() => {
-        fetch("${API_BASE_URL}/products/card/with-coupons?limit=8")
+        fetch(`${API_BASE_URL}/products/card/with-coupons?limit=8`)
             .then(res => res.json())
             .then(data => setCouponProducts(Array.isArray(data) ? data : []));
     }, []);
 
     useEffect(() => {
-        fetch("${API_BASE_URL}/products/card/best-sellers?limit=8")
+        fetch(`${API_BASE_URL}/products/card/best-sellers?limit=8`)
             .then(res => res.json())
             .then(data => setBestSellers(Array.isArray(data) ? data : []));
     }, []);

@@ -72,7 +72,7 @@ const CategoryPanel = ({ open, openFunc }) => {
     };
 
     React.useEffect(() => {
-        fetch("${API_BASE_URL}/products/tags/tree")
+        fetch(`${API_BASE_URL}/products/tags/tree`)
             .then(res => res.json())
             .then(data => {
                 setCategories(Array.isArray(data) ? data : []);
