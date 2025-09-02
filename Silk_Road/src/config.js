@@ -1,9 +1,9 @@
-// API Configuration
-export const API_BASE_URL = 'http://localhost:8000/api/v1';
+// API Configuration (Production)
+export const API_BASE_URL = 'https://silk-road-k826.onrender.com/api/v1';
 
-// SSLCommerz Configuration
+// SSLCommerz Configuration (Production)
 export const SSLCOMMERZ_CONFIG = {
-  successUrl: 'http://localhost:5173/payment/success',
-  failUrl: 'http://localhost:5173/payment/fail',
-  cancelUrl: 'http://localhost:5173/payment/cancel'
+  successUrl: 'https://your-app-name.netlify.app/payment/success',
+  failUrl: 'https://your-app-name.netlify.app/payment/fail',
+  cancelUrl: 'https://your-app-name.netlify.app/payment/cancel'
 }; 
