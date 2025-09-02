@@ -195,7 +195,7 @@ const Home = () => {
                 <div className="container">
                     <div className="freeshipping flex items-center justify-between bg-[#9DC08B] text-white p-4 rounded-md">
                         <div className="flex items-center gap-3">
-                            <img src="van.png" title="free icons" alt="" className="w-[70px]" />
+                            <img src="/van.png" title="free icons" alt="" className="w-[70px]" />
                             <h1 className="text-[35px] font-bold">FREE SHIPPING</h1>
                         </div>
                         <p className="text-[28px] font-medium">

@@ -21,19 +21,19 @@ const HomeSlider = () => {
                 className="mySwiper custom-swiper"
             >
                 <SwiperSlide>
-                    <img src="61lwJy4B8PL._SX3000_.jpg" alt="Slide 1" className="w-full h-[300px] object-top object-cover" />
+                    <img src="/61lwJy4B8PL._SX3000_.jpg" alt="Slide 1" className="w-full h-[300px] object-top object-cover" />
                 </SwiperSlide>
                 <SwiperSlide>
-                    <img src="61zAjw4bqPL._SX3000_.jpg" alt="Slide 2" className="w-full h-[300px] object-top object-cover" />
+                    <img src="/61zAjw4B8PL._SX3000_.jpg" alt="Slide 2" className="w-full h-[300px] object-top object-cover" />
                 </SwiperSlide>
                 <SwiperSlide>
-                    <img src="71h15GsHkvL._SX3000_.jpg" alt="Slide 3" className="w-full h-[300px] object-top object-cover" />
+                    <img src="/71h15GsHkvL._SX3000_.jpg" alt="Slide 3" className="w-full h-[300px] object-top object-cover" />
                 </SwiperSlide>
                 <SwiperSlide>
-                    <img src="71Ie3JXGfVL._SX3000_.jpg" alt="Slide 4" className="w-full h-[300px] object-top object-cover" />
+                    <img src="/71Ie3JXGfVL._SX3000_.jpg" alt="Slide 4" className="w-full h-[300px] object-top object-cover" />
                 </SwiperSlide>
                 <SwiperSlide>
-                    <img src="81KkrQWEHIL._SX3000_.jpg" alt="Slide 5" className="w-full h-[300px] object-top object-cover" />
+                    <img src="/81KkrQWEHIL._SX3000_.jpg" alt="Slide 5" className="w-full h-[300px] object-top object-cover" />
                 </SwiperSlide>
             </Swiper>
         </div>

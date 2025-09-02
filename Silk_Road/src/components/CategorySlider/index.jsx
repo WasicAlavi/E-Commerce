@@ -26,7 +26,7 @@ const CategorySlider = () => {
                                 aria-label="Fashion category card"
                             >
                                 <img
-                                    src="item1.png"
+                                    src="/item1.png"
                                     alt="Fashion category"
                                     className="w-[60px] h-[60px] object-cover hover:scale-110 transition-transform duration-300"
                                 />
@@ -41,7 +41,7 @@ const CategorySlider = () => {
                                 aria-label="Electronics category card"
                             >
                                 <img
-                                    src="item8.png"
+                                    src="/item8.png"
                                     alt="Electronics category"
                                     className="w-[60px] h-[60px] object-cover hover:scale-110 transition-transform duration-300"
                                 />
@@ -56,7 +56,7 @@ const CategorySlider = () => {
                                 aria-label="Bags category card"
                             >
                                 <img
-                                    src="item2.png"
+                                    src="/item2.png"
                                     alt="Bags category"
                                     className="w-[60px] h-[60px] object-cover hover:scale-110 transition-transform duration-300"
                                 />
@@ -71,7 +71,7 @@ const CategorySlider = () => {
                                 aria-label="Footwear category card"
                             >
                                 <img
-                                    src="item3.png"
+                                    src="/item3.png"
                                     alt="Footwear category"
                                     className="w-[60px] h-[60px] object-cover hover:scale-110 transition-transform duration-300"
                                 />
@@ -86,7 +86,7 @@ const CategorySlider = () => {
                                 aria-label="Groceries category card"
                             >
                                 <img
-                                    src="item4.png"
+                                    src="/item4.png"
                                     alt="Groceries category"
                                     className="w-[60px] h-[60px] object-cover hover:scale-110 transition-transform duration-300"
                                 />
@@ -101,7 +101,7 @@ const CategorySlider = () => {
                                 aria-label="Beauty category card"
                             >
                                 <img
-                                    src="item5.png"
+                                    src="/item5.png"
                                     alt="Beauty category"
                                     className="w-[60px] h-[60px] object-cover hover:scale-110 transition-transform duration-300"
                                 />
@@ -116,7 +116,7 @@ const CategorySlider = () => {
                                 aria-label="Wellness category card"
                             >
                                 <img
-                                    src="item6.png"
+                                    src="/item6.png"
                                     alt="Wellness category"
                                     className="w-[60px] h-[60px] object-cover hover:scale-110 transition-transform duration-300"
                                 />
@@ -131,7 +131,7 @@ const CategorySlider = () => {
                                 aria-label="Jewellery category card"
                             >
                                 <img
-                                    src="item7.png"
+                                    src="/item7.png"
                                     alt="Jewellery category"
                                     className="w-[60px] h-[60px] object-cover hover:scale-110 transition-transform duration-300"
                                 />
