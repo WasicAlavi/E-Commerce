@@ -30,16 +30,17 @@ from app.db.init_triggers import create_triggers
 app = FastAPI(title="E-commerce API", version="1.0.0")
 
 # Add CORS middleware
+import os
+
+# Get CORS origins from environment or use defaults
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,https://jovial-haupia-9f2dd7.netlify.app,https://*.netlify.app,https://silk-road-k826.onrender.com")
+
+# Split the comma-separated string into a list
+cors_origins = [origin.strip() for origin in CORS_ORIGINS.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", 
-        "http://localhost:3000", 
-        "http://127.0.0.1:5173", 
-        "http://127.0.0.1:3000",
-        "https://your-app-name.netlify.app",  # Replace with your actual Netlify domain
-        "https://*.netlify.app"  # Allow all Netlify subdomains
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
