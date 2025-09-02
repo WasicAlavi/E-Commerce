@@ -1,5 +1,5 @@
 // API Configuration (Production)
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://silk-road-k826.onrender.com/api/v1';ommit 
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://silk-road-k826.onrender.com/api/v1'; 
 
 // SSLCommerz Configuration (Production)
 export const SSLCOMMERZ_CONFIG = {
