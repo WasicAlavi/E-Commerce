@@ -12,12 +12,12 @@ const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <img src="/logo3.jpg" alt="Silk Road" className="w-12 h-12 rounded" />
+              <img src="/logo4.png" alt="Silk Road" className="w-12 h-12 rounded" />
               <h3 className="text-xl font-bold">Silk Road</h3>
             </div>
             <p className="text-gray-300 leading-relaxed">
               Your trusted destination for quality products. We bring you the best selection 
-              of fashion, electronics, and lifestyle products at competitive prices.
+              of products at reasonable prices.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-300 hover:text-[#9DC08B] transition-colors">
@@ -119,14 +119,14 @@ const Footer = () => {
               <div className="flex items-center gap-3">
                 <MdLocationOn className="text-[#9DC08B]" size={20} />
                 <div>
-                  <p className="text-gray-300">123 Commerce Street</p>
+                  <p className="text-gray-300">11/4 Hosseni Dalan</p>
                   <p className="text-gray-300">Dhaka, Bangladesh</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <MdPhone className="text-[#9DC08B]" size={20} />
                 <div>
-                  <p className="text-gray-300">+880 1234-567890</p>
+                  <p className="text-gray-300">+880 1792-581144</p>
                   <p className="text-gray-300">+880 1234-567891</p>
                 </div>
               </div>

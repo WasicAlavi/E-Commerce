@@ -29,6 +29,8 @@ class OrderItem:
             try:
                 await conn.execute("CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id)")
                 await conn.execute("CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id)")
+                await conn.execute("CREATE INDEX IF NOT EXISTS idx_order_items_quantity ON order_items(quantity)")
+                await conn.execute("CREATE INDEX IF NOT EXISTS idx_order_items_price ON order_items(price)")
             except Exception as e:
                 pass
 
@@ -140,3 +142,32 @@ class OrderItem:
             "quantity": self.quantity,
             "price": float(self.price)
         }
+
+    @classmethod
+    async def has_customer_purchased_product(cls, customer_id: int, product_id: int) -> bool:
+        """Check if a customer has purchased a specific product (with delivered status)"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            result = await conn.fetchval("""
+                SELECT COUNT(*) 
+                FROM order_items oi
+                JOIN orders o ON oi.order_id = o.id
+                WHERE o.customer_id = $1 
+                AND oi.product_id = $2 
+                AND o.status IN ('delivered', 'approved', 'shipped')
+            """, customer_id, product_id)
+            return result > 0 if result else False
+
+    @classmethod
+    async def get_customer_purchased_products(cls, customer_id: int) -> List[int]:
+        """Get list of product IDs that a customer has purchased (with delivered status)"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT DISTINCT oi.product_id
+                FROM order_items oi
+                JOIN orders o ON oi.order_id = o.id
+                WHERE o.customer_id = $1 
+                AND o.status IN ('delivered', 'approved', 'shipped')
+            """, customer_id)
+            return [row['product_id'] for row in rows]

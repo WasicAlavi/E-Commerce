@@ -14,6 +14,9 @@ import Tooltip from '@mui/material/Tooltip';
 import Navigation from "./Navigation";
 import { useAuth } from '../../AuthContext';
 import authService from '../../services/authService.js';
+import cartService from '../../services/cartService.js';
+import wishlistService from '../../services/wishlistService.js';
+import CompareService from '../../services/compareService';
 
 
 const StyledBadge = styled(Badge) (({ theme }) => ({
@@ -29,8 +32,90 @@ const StyledBadge = styled(Badge) (({ theme }) => ({
 
 const Header = () => {
     const [anchorEl, setAnchorEl] = useState(null);
-    const { isLoggedIn, currentUser, logout } = useAuth();
+    const [cartCount, setCartCount] = useState(0);
+    const [wishlistCount, setWishlistCount] = useState(0);
+    const [compareCount, setCompareCount] = useState(0);
+    const { isLoggedIn, user: currentUser, logout } = useAuth();
     const navigate = useNavigate();
+
+    // Fetch badge counts
+    const fetchBadgeCounts = async () => {
+        if (!isLoggedIn) {
+            setCartCount(0);
+            setWishlistCount(0);
+            setCompareCount(0);
+            return;
+        }
+
+        try {
+            // Fetch cart count using dedicated method
+            const cartItemCount = await cartService.getCartItemCount();
+            console.log('Cart item count for badge:', cartItemCount);
+            setCartCount(cartItemCount);
+
+            // Fetch wishlist count using dedicated method
+            const wishlistItemCount = await wishlistService.getWishlistItemCount();
+            console.log('Wishlist item count for badge:', wishlistItemCount);
+            setWishlistCount(wishlistItemCount);
+
+            // Fetch compare count from CompareService
+            const compareCount = CompareService.getCompareListCount();
+            setCompareCount(compareCount);
+        } catch (error) {
+            console.error('Error fetching badge counts:', error);
+            // Set counts to 0 on error
+            setCartCount(0);
+            setWishlistCount(0);
+        }
+    };
+
+    // Fetch counts when user logs in/out or component mounts
+    useEffect(() => {
+        fetchBadgeCounts();
+    }, [isLoggedIn, currentUser]);
+
+    // Listen for cart, wishlist, and compare updates
+    useEffect(() => {
+        const handleCartUpdate = () => {
+            console.log('Cart update event received, refreshing badges...');
+            fetchBadgeCounts();
+        };
+
+        const handleWishlistUpdate = () => {
+            console.log('Wishlist update event received, refreshing badges...');
+            fetchBadgeCounts();
+        };
+
+        const handleCompareUpdate = () => {
+            console.log('Compare update event received, refreshing badges...');
+            fetchBadgeCounts();
+        };
+
+        // Add event listeners
+        window.addEventListener('cartUpdated', handleCartUpdate);
+        window.addEventListener('wishlistUpdated', handleWishlistUpdate);
+        window.addEventListener('compareUpdated', handleCompareUpdate);
+
+        // Cleanup
+        return () => {
+            window.removeEventListener('cartUpdated', handleCartUpdate);
+            window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
+            window.removeEventListener('compareUpdated', handleCompareUpdate);
+        };
+    }, [isLoggedIn]);
+
+    // Function to trigger badge count refresh (can be called from other components)
+    const refreshBadgeCounts = () => {
+        fetchBadgeCounts();
+    };
+
+    // Expose the refresh function globally for other components to use
+    useEffect(() => {
+        window.refreshHeaderBadges = refreshBadgeCounts;
+        return () => {
+            delete window.refreshHeaderBadges;
+        };
+    }, []);
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -57,20 +142,6 @@ const Header = () => {
                                 Get up to 40% off new season styles
                             </p>
                         </div>
-
-                        <div className="col2 flex items-center justify-end">
-                            <ul className="flex items-center gap-5">
-                                <li className="list-none text-[#40513B]">
-                                    <Link to="/help-center" className="text-[18px] link font-[500]">Help Center</Link>
-                                </li>
-
-                                <li className="list-none text-[#40513B]">
-                                    <Link to="/order-tracking" className="text-[18px] link font-[500]">Order Tracking</Link>
-                                </li>
-
-                            </ul>
-                        </div>
-
                     </div>
                 </div>
             </div>
@@ -111,7 +182,7 @@ const Header = () => {
                                         <MenuItem onClick={handleProfileMenuClose} component={Link} to="/profile">
                                             My Profile
                                         </MenuItem>
-                                        <MenuItem onClick={handleProfileMenuClose} component={Link} to="/order-tracking">
+                                        <MenuItem onClick={handleProfileMenuClose} component={Link} to="/profile">
                                             My Orders
                                         </MenuItem>
                                         <MenuItem onClick={handleLogout}>
@@ -130,7 +201,7 @@ const Header = () => {
                                 <Tooltip title="Compare Products" arrow>
                                     <Link to="/compare">
                                         <IconButton aria-label="compare">
-                                            <StyledBadge badgeContent={3}>
+                                            <StyledBadge badgeContent={compareCount > 0 ? compareCount : null}>
                                                 <IoIosGitCompare size={28} color="#40513B"/>
                                             </StyledBadge>
                                         </IconButton>
@@ -142,7 +213,7 @@ const Header = () => {
                                 <Tooltip title="Wishlist" arrow>
                                     <Link to="/wishlist">
                                         <IconButton aria-label="wishlist">
-                                            <StyledBadge badgeContent={4}>
+                                            <StyledBadge badgeContent={wishlistCount > 0 ? wishlistCount : null}>
                                                 <FiHeart size={28} color="#40513B"/>
                                             </StyledBadge>
                                         </IconButton>
@@ -154,7 +225,7 @@ const Header = () => {
                                 <Tooltip title="Shopping Cart" arrow>
                                     <Link to="/cart">
                                         <IconButton aria-label="cart">
-                                            <StyledBadge badgeContent={4}>
+                                            <StyledBadge badgeContent={cartCount > 0 ? cartCount : null}>
                                                 <MdOutlineShoppingCart size={28} color="#40513B"/>
                                             </StyledBadge>
                                         </IconButton>

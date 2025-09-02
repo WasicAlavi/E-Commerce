@@ -5,7 +5,12 @@ from app.schemas.customer import CustomerCreate, CustomerUpdate, CustomerOut
 async def create_customer(customer_data: CustomerCreate) -> Customer:
     """Create a new customer"""
     return await Customer.create(
-        user_id=customer_data.user_id
+        user_id=customer_data.user_id,
+        first_name=customer_data.first_name,
+        last_name=customer_data.last_name,
+        phone=customer_data.phone,
+        date_of_birth=customer_data.date_of_birth,
+        gender=customer_data.gender
     )
 
 async def get_customer_by_id(customer_id: int) -> Optional[Customer]:
@@ -26,15 +31,13 @@ async def update_customer(customer_id: int, customer_data: CustomerUpdate) -> Op
     if not customer:
         return None
     
-    update_data = {}
-    if customer_data.phone is not None:
-        update_data['phone'] = customer_data.phone
-    if customer_data.date_of_birth is not None:
-        update_data['date_of_birth'] = customer_data.date_of_birth
-    if customer_data.gender is not None:
-        update_data['gender'] = customer_data.gender
-    
-    return await customer.update(**update_data)
+    return await customer.update(
+        first_name=customer_data.first_name,
+        last_name=customer_data.last_name,
+        phone=customer_data.phone,
+        date_of_birth=customer_data.date_of_birth,
+        gender=customer_data.gender
+    )
 
 async def delete_customer(customer_id: int) -> bool:
     """Delete customer"""

@@ -61,9 +61,26 @@ async def delete_user(user_id: int) -> bool:
         return False
     return await user.delete()
 
-async def authenticate_user(username: str, password: str) -> Optional[User]:
-    """Authenticate user with username and password"""
-    user = await get_user_by_username(username)
+async def update_user_role(user_id: int, role: str) -> Optional[User]:
+    """Update user role"""
+    user = await User.get_by_id(user_id)
+    if not user:
+        return None
+    return await user.update_role(role)
+
+async def fix_null_roles() -> int:
+    """Fix all users with null roles"""
+    return await User.fix_null_roles()
+
+async def authenticate_user(username_or_email: str, password: str) -> Optional[User]:
+    """Authenticate user with username or email and password"""
+    # First try username
+    user = await get_user_by_username(username_or_email)
+    
+    # If not found and input contains @, try email
+    if not user and '@' in username_or_email:
+        user = await get_user_by_email(username_or_email)
+    
     if not user:
         return None
     if not verify_password(password, user.hashed_password):

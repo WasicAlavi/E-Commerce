@@ -12,14 +12,20 @@ from app.routes import (
     review as review_routes,
     wishlist as wishlist_routes,
     discount as discount_routes,
-    coupon as coupon_routes
+    coupon as coupon_routes,
+    admin as admin_routes,
+    analytics as analytics_routes,
+    advanced_analytics as advanced_analytics_routes,
+    analytics_tracking as analytics_tracking_routes,
+    rider as rider_routes
 )
 from app.models import (
     user, customer, address, product, tag, product_tag, product_image,
     order, order_item, order_status, cart, cart_item, payment_method,
     review, wishlist, wishlist_item, search_history, discount, coupon,
-    coupon_redeem, admin
+    coupon_redeem, admin, shipping, analytics, rider, delivery_assignment
 )
+from app.db.init_triggers import create_triggers
 
 app = FastAPI(title="E-commerce API", version="1.0.0")
 
@@ -28,8 +34,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:3000"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Mount the static directory
@@ -47,6 +54,11 @@ app.include_router(review_routes.router, prefix="/api/v1")
 app.include_router(wishlist_routes.router, prefix="/api/v1")
 app.include_router(discount_routes.router, prefix="/api/v1")
 app.include_router(coupon_routes.router, prefix="/api/v1")
+app.include_router(admin_routes.router, prefix="/api/v1")
+app.include_router(analytics_routes.router, prefix="/api/v1")
+app.include_router(advanced_analytics_routes.router, prefix="/api/v1")
+app.include_router(analytics_tracking_routes.router, prefix="/api/v1")
+app.include_router(rider_routes.router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup_event():
@@ -73,6 +85,14 @@ async def startup_event():
     await discount.Discount.create_table()
     await coupon.Coupon.create_table()
     await coupon_redeem.CouponRedeem.create_table()
+    await shipping.ShippingInfo.create_table()
+    await analytics.RealTimeEvents.create_table() # Add this line
+    await rider.Rider.create_table()
+    await delivery_assignment.DeliveryAssignment.create_table()
+    # await order_status.OrderStatus.create_table()  # Temporarily disabled
+    
+    # Initialize database triggers
+    await create_triggers()
 
 @app.get("/")
 async def root():

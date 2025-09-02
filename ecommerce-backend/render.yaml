@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: ecommerce-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: SSLCOMMERZ_STORE_ID
+        sync: false
+      - key: SSLCOMMERZ_STORE_PASSWORD
+        sync: false
+      - key: SSLCOMMERZ_SANDBOX
+        value: "False"
+      - key: SSLCOMMERZ_SUCCESS_URL
+        sync: false
+      - key: SSLCOMMERZ_FAIL_URL
+        sync: false
+      - key: SSLCOMMERZ_CANCEL_URL
+        sync: false
+      - key: SSLCOMMERZ_IPN_URL
+        sync: false
+      - key: FRONTEND_SUCCESS_URL
+        sync: false
+      - key: FRONTEND_FAIL_URL
+        sync: false
+      - key: FRONTEND_CANCEL_URL
+        sync: false

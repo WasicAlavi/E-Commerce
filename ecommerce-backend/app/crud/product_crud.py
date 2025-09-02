@@ -13,7 +13,14 @@ async def create_product(product_data: ProductCreate) -> Product:
         name=product_data.name,
         description=product_data.description,
         price=product_data.price,
-        stock=product_data.stock
+        stock=product_data.stock,
+        brand=product_data.brand,
+        material=product_data.material,
+        colors=product_data.colors,
+        sizes=product_data.sizes,
+        care_instructions=product_data.care_instructions,
+        features=product_data.features,
+        specifications=product_data.specifications
     )
 
 async def get_product_by_id(product_id: int) -> Optional[Product]:
@@ -51,6 +58,20 @@ async def update_product(product_id: int, product_data: ProductUpdate) -> Option
         update_data['price'] = product_data.price
     if product_data.stock is not None:
         update_data['stock'] = product_data.stock
+    if product_data.brand is not None:
+        update_data['brand'] = product_data.brand
+    if product_data.material is not None:
+        update_data['material'] = product_data.material
+    if product_data.colors is not None:
+        update_data['colors'] = product_data.colors
+    if product_data.sizes is not None:
+        update_data['sizes'] = product_data.sizes
+    if product_data.care_instructions is not None:
+        update_data['care_instructions'] = product_data.care_instructions
+    if product_data.features is not None:
+        update_data['features'] = product_data.features
+    if product_data.specifications is not None:
+        update_data['specifications'] = product_data.specifications
     
     return await product.update(**update_data)
 
@@ -115,9 +136,16 @@ async def add_tag_to_product(product_id: int, tag_name: str) -> Optional[Product
     
     return await ProductTag.create(product_id, tag.id)
 
-async def get_product_tags(product_id: int) -> List[str]:
-    """Get tag names for a product"""
-    return await ProductTag.get_tags_for_product(product_id)
+async def get_product_tags(product_id: int) -> List[dict]:
+    """Get tag objects (id and name) for a product"""
+    # Get all product_tag associations for this product
+    product_tags = await ProductTag.get_by_product_id(product_id)
+    tags = []
+    for pt in product_tags:
+        tag = await Tag.get_by_id(pt.tag_id)
+        if tag:
+            tags.append({"id": tag.id, "name": tag.tag_name})
+    return tags
 
 async def remove_tag_from_product(product_id: int, tag_name: str) -> bool:
     """Remove tag from product"""

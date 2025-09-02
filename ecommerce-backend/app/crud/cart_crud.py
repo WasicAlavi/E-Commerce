@@ -10,11 +10,11 @@ async def create_cart(cart_data: CartCreate) -> Cart:
 
 async def get_cart_by_id(cart_id: int) -> Optional[Cart]:
     """Get cart by ID"""
-    return await Cart.get_by_id(cart_id)
+    return await Cart.get_by_id(cart_id, include_deleted=False)
 
 async def get_cart_by_customer(customer_id: int) -> Optional[Cart]:
     """Get cart by customer ID"""
-    return await Cart.get_by_customer_id(customer_id)
+    return await Cart.get_by_customer_id(customer_id, include_deleted=False)
 
 async def get_carts(skip: int = 0, limit: int = 100) -> List[Cart]:
     """Get all carts with pagination"""
@@ -35,6 +35,10 @@ async def get_cart_with_details(cart_id: int) -> Optional[dict]:
     """Get cart with customer and item details"""
     return await Cart.get_with_details(cart_id)
 
+async def get_cart_total(cart_id: int) -> float:
+    """Get cart total amount"""
+    return await Cart.get_total(cart_id)
+
 async def clear_cart(cart_id: int) -> bool:
     """Clear all items from cart"""
     cart = await Cart.get_by_id(cart_id)
@@ -53,11 +57,11 @@ async def add_cart_item(item_data: CartItemCreate) -> CartItem:
 
 async def get_cart_item_by_id(item_id: int) -> Optional[CartItem]:
     """Get cart item by ID"""
-    return await CartItem.get_by_id(item_id)
+    return await CartItem.get_by_id(item_id, include_deleted=False)
 
 async def get_cart_items(cart_id: int) -> List[CartItem]:
     """Get all items in a cart"""
-    return await CartItem.get_by_cart_id(cart_id)
+    return await CartItem.get_by_cart_id(cart_id, include_deleted=False)
 
 async def update_cart_item_quantity(item_id: int, quantity: int) -> Optional[CartItem]:
     """Update cart item quantity"""
@@ -76,10 +80,6 @@ async def remove_cart_item(item_id: int) -> bool:
 async def get_cart_item_with_product(item_id: int) -> Optional[dict]:
     """Get cart item with product details"""
     return await CartItem.get_with_product(item_id)
-
-async def get_cart_total(cart_id: int) -> float:
-    """Get cart total amount"""
-    return await Cart.get_total(cart_id)
 
 async def check_cart_item_exists(cart_id: int, product_id: int) -> Optional[CartItem]:
     """Check if item exists in cart"""

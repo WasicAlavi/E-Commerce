@@ -8,19 +8,34 @@ import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import { Navigation } from 'swiper/modules';
 import ProductSlider from '../../components/ProductSlider';
+import ProductCard from '../../components/ProductCard';
+import Recommendations from '../../components/Recommendations';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../AuthContext';
+import trackingService from '../../services/trackingService';
 
 
 const Home = () => {
+    const { user, isLoggedIn, token } = useAuth();
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [value, setValue] = useState(0);
+    const [discountProducts, setDiscountProducts] = useState([]);
+    const [couponProducts, setCouponProducts] = useState([]);
+    const [bestSellers, setBestSellers] = useState([]);
+    const [categoryProducts, setCategoryProducts] = useState({});
+    const [forYouProducts, setForYouProducts] = useState([]);
+    const [forYouLoading, setForYouLoading] = useState(false);
 
 
     useEffect(() => {
         fetch("http://localhost:8000/api/v1/products/tags/tree")
             .then(res => res.json())
             .then(data => setCategories(Array.isArray(data) ? data : []));
-    }, []);
+        
+        // Track home page view
+        trackingService.trackPageView('/', user?.id, user?.customer_id);
+    }, [user]);
 
 
     useEffect(() => {
@@ -32,6 +47,76 @@ const Home = () => {
             .then(data => setProducts(Array.isArray(data) ? data : []));
     }, [categories, value]);
 
+    useEffect(() => {
+        fetch("http://localhost:8000/api/v1/products/card/highest-discounts?limit=8")
+            .then(res => res.json())
+            .then(data => setDiscountProducts(Array.isArray(data) ? data : []));
+    }, []);
+
+    useEffect(() => {
+        fetch("http://localhost:8000/api/v1/products/card/with-coupons?limit=8")
+            .then(res => res.json())
+            .then(data => setCouponProducts(Array.isArray(data) ? data : []));
+    }, []);
+
+    useEffect(() => {
+        fetch("http://localhost:8000/api/v1/products/card/best-sellers?limit=8")
+            .then(res => res.json())
+            .then(data => setBestSellers(Array.isArray(data) ? data : []));
+    }, []);
+
+    useEffect(() => {
+        if (categories.length > 0) {
+            // Fetch products for ALL categories, not just the first three
+            categories.forEach(category => {
+                if (category && category.id) {
+                    fetch(`http://localhost:8000/api/v1/products/card/by_tag/${category.id}?limit=6`)
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error(`HTTP error! status: ${res.status}`);
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            setCategoryProducts(prev => ({
+                                ...prev,
+                                [category.id]: Array.isArray(data) ? data : []
+                            }));
+                        })
+                        .catch(error => {
+                            console.error(`Error fetching products for category ${category.name} (ID: ${category.id}):`, error);
+                            setCategoryProducts(prev => ({
+                                ...prev,
+                                [category.id]: []
+                            }));
+                        });
+                }
+            });
+        }
+    }, [categories]);
+
+    // Fetch personalized recommendations
+    useEffect(() => {
+        const fetchForYou = async () => {
+            if (!isLoggedIn || !user?.customer_id) return;
+            setForYouLoading(true);
+            try {
+                const res = await fetch(`http://localhost:8000/api/v1/products/for_you/${user.customer_id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setForYouProducts(Array.isArray(data) ? data : []);
+                } else {
+                    setForYouProducts([]);
+                }
+            } catch (err) {
+                setForYouProducts([]);
+            } finally {
+                setForYouLoading(false);
+            }
+        };
+        fetchForYou();
+    }, [isLoggedIn, user]);
+
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
@@ -40,6 +125,16 @@ const Home = () => {
         <>
             <HomeSlider />
             <CategorySlider />
+
+            {/* For You Section */}
+            {isLoggedIn && user?.customer_id && (
+                <Recommendations 
+                    type="customer"
+                    customerId={user.customer_id}
+                    title="Recommended for You"
+                    limit={12}
+                />
+            )}
 
             <section className="bg-[#EDF6E5] py-8 font-montserrat">
                 <div className="container mx-auto px-4">
@@ -107,6 +202,57 @@ const Home = () => {
                             On all orders over <strong>৳3000</strong>
                         </p>
                     </div>
+                </div>
+            </section>
+
+            {/* New Product Sections */}
+            <section className="bg-[#EDF6E5] py-8 font-montserrat">
+                <div className="container mx-auto px-4">
+                    <ProductSlider items={5} title="Biggest Discounts" products={discountProducts} />
+                </div>
+            </section>
+
+            {/* Trending Now Section */}
+            <Recommendations 
+                type="trending"
+                title="Trending Now"
+                limit={12}
+            />
+
+            {/* Category Product Sections */}
+            {categories.map((category) => (
+                <section key={category.id} className="bg-white py-8 font-montserrat">
+                    <div className="container mx-auto px-4">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-[26px] font-bold text-[#40513B]">{category.name}</h2>
+                            <Link
+                                to={`/category/${category.name}`}
+                                className="text-[#9DC08B] hover:text-[#40513B] transition-colors duration-200"
+                            >
+                                View All →
+                            </Link>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            {(categoryProducts[category.id]?.slice(0, 5) || []).map((product) => (
+                                <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200">
+                                    <ProductCard product={{ ...product, image: product.image || '/default-product.png' }} />
+                                </div>
+                            ))}
+                        </div>
+
+                        {(!categoryProducts[category.id] || categoryProducts[category.id].length === 0) && (
+                            <div className="text-center py-10 text-[#40513B]">
+                                No products available in this category.
+                            </div>
+                        )}
+                    </div>
+                </section>
+            ))}
+
+            <section className="bg-white py-8 font-montserrat">
+                <div className="container mx-auto px-4">
+                    <ProductSlider items={5} title="Best Sellers" products={bestSellers} />
                 </div>
             </section>
         </>

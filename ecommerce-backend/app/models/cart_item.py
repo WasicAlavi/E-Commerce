@@ -60,27 +60,28 @@ class CartItem:
             return cls(**dict(row))
 
     @classmethod
-    async def get_by_id(cls, item_id: int) -> Optional['CartItem']:
-        """Get cart item by ID"""
+    async def get_by_id(cls, item_id: int, include_deleted: bool = False) -> Optional['CartItem']:
+        """Get cart item by ID, excluding deleted by default"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow("""
-                SELECT id, cart_id, product_id, quantity
-                FROM cart_items WHERE id = $1
-            """, item_id)
+            query = "SELECT id, cart_id, product_id, quantity FROM cart_items WHERE id = $1"
+            params = [item_id]
+            if not include_deleted:
+                query += " AND is_deleted = FALSE"
+            row = await conn.fetchrow(query, *params)
             return cls(**dict(row)) if row else None
 
     @classmethod
-    async def get_by_cart_id(cls, cart_id: int) -> List['CartItem']:
-        """Get all items in a cart"""
+    async def get_by_cart_id(cls, cart_id: int, include_deleted: bool = False) -> List['CartItem']:
+        """Get all items in a cart, excluding deleted by default"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            rows = await conn.fetch("""
-                SELECT id, cart_id, product_id, quantity
-                FROM cart_items 
-                WHERE cart_id = $1
-                ORDER BY id
-            """, cart_id)
+            query = "SELECT id, cart_id, product_id, quantity FROM cart_items WHERE cart_id = $1"
+            params = [cart_id]
+            if not include_deleted:
+                query += " AND is_deleted = FALSE"
+            query += " ORDER BY id"
+            rows = await conn.fetch(query, *params)
             return [cls(**dict(row)) for row in rows]
 
     @classmethod
@@ -119,6 +120,41 @@ class CartItem:
                 WHERE ci.cart_id = $1
             """, cart_id)
             return float(result) if result else 0.0
+
+    @classmethod
+    async def get_by_cart_id_with_products(cls, cart_id: int) -> List[Dict[str, Any]]:
+        """Get all items in a cart with product details"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT 
+                    ci.id, ci.cart_id, ci.product_id, ci.quantity,
+                    p.name as product_name, p.price as product_price,
+                    COALESCE(pi.image_url, 'https://via.placeholder.com/100x100?text=No+Image') as product_image
+                FROM cart_items ci
+                JOIN products p ON ci.product_id = p.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = TRUE
+                WHERE ci.cart_id = $1
+                ORDER BY ci.id
+            """, cart_id)
+            return [dict(row) for row in rows]
+
+    @classmethod
+    async def get_with_product(cls, item_id: int) -> Optional[Dict[str, Any]]:
+        """Get cart item with product details"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow("""
+                SELECT 
+                    ci.id, ci.cart_id, ci.product_id, ci.quantity,
+                    p.name as product_name, p.price as product_price,
+                    COALESCE(pi.image_url, 'https://via.placeholder.com/100x100?text=No+Image') as product_image
+                FROM cart_items ci
+                JOIN products p ON ci.product_id = p.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = TRUE
+                WHERE ci.id = $1
+            """, item_id)
+            return dict(row) if row else None
 
     async def update_quantity(self, quantity: int) -> 'CartItem':
         """Update item quantity"""
@@ -168,19 +204,25 @@ class CartItem:
             return CartItem(**dict(row)) if row else None
 
     async def delete(self) -> bool:
-        """Delete cart item"""
+        """Soft delete cart item"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            result = await conn.execute("DELETE FROM cart_items WHERE id = $1", self.id)
-            return result == "DELETE 1"
+            result = await conn.execute(
+                "UPDATE cart_items SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1",
+                self.id
+            )
+            return result.startswith("UPDATE")
 
     @classmethod
     async def clear_cart(cls, cart_id: int) -> bool:
-        """Clear all items from a cart"""
+        """Soft delete all items from a cart"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            result = await conn.execute("DELETE FROM cart_items WHERE cart_id = $1", cart_id)
-            return result.startswith("DELETE")
+            result = await conn.execute(
+                "UPDATE cart_items SET is_deleted = TRUE, deleted_at = NOW() WHERE cart_id = $1",
+                cart_id
+            )
+            return result.startswith("UPDATE")
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""

@@ -3,8 +3,11 @@ from typing import List, Optional
 from app.crud import customer_crud
 from app.schemas.customer import (
     CustomerCreate, CustomerUpdate, CustomerOut, CustomerWithUser, 
-    CustomerWithDetails, CustomerList, CustomerResponse
+    CustomerWithDetails, CustomerList, CustomerResponse, CustomerProfileOut
 )
+from app.models.customer import Customer
+from app.models.user import User
+from app.models.order import Order
 
 router = APIRouter(prefix="/customers", tags=["customers"])
 
@@ -126,4 +129,102 @@ async def search_customers(
         total=total,
         skip=skip,
         limit=limit
-    ) 
+    )
+
+@router.get("/profile/{customer_id}", response_model=CustomerProfileOut)
+async def get_customer_profile(customer_id: int):
+    """Get customer profile with user information"""
+    try:
+        # Get customer data
+        customer = await Customer.get_by_id(customer_id)
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        
+        # Get user data
+        user = await User.get_by_id(customer.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return CustomerProfileOut(
+            id=customer.id,
+            user_id=customer.user_id,
+            first_name=customer.first_name,
+            last_name=customer.last_name,
+            phone=customer.phone,
+            date_of_birth=customer.date_of_birth.strftime('%Y-%m-%d') if customer.date_of_birth else None,
+            gender=customer.gender,
+            email=user.email,
+            username=user.username
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch profile: {str(e)}")
+
+@router.put("/profile/{user_id}", response_model=CustomerProfileOut)
+async def update_customer_profile(user_id: int, profile_data: CustomerUpdate):
+    """Update customer profile"""
+    try:
+        print(f"Received profile update data: {profile_data}")  # Debug log
+        
+        # Get customer
+        customer = await Customer.get_by_user_id(user_id)
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        
+        print(f"Current customer data: {customer.to_dict()}")  # Debug log
+        
+        # Update customer data
+        updated_customer = await customer.update(
+            first_name=profile_data.first_name,
+            last_name=profile_data.last_name,
+            phone=profile_data.phone,
+            date_of_birth=profile_data.date_of_birth,
+            gender=profile_data.gender
+        )
+        
+        print(f"Updated customer data: {updated_customer.to_dict()}")  # Debug log
+        
+        # Get user data
+        user = await User.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return CustomerProfileOut(
+            id=updated_customer.id,
+            user_id=updated_customer.user_id,
+            first_name=updated_customer.first_name,
+            last_name=updated_customer.last_name,
+            phone=updated_customer.phone,
+            date_of_birth=updated_customer.date_of_birth.strftime('%Y-%m-%d') if updated_customer.date_of_birth else None,
+            gender=updated_customer.gender,
+            email=user.email,
+            username=user.username
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating profile: {str(e)}")  # Debug log
+        raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
+
+@router.get("/orders/{customer_id}")
+async def get_customer_orders(customer_id: int):
+    """Get customer orders with details"""
+    try:
+        # Get customer data
+        customer = await Customer.get_by_id(customer_id)
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        
+        # Get orders with details
+        orders = await Order.get_by_customer_id_with_details(customer.id)
+        
+        return {
+            "success": True,
+            "message": "Orders retrieved successfully",
+            "data": orders
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch orders: {str(e)}") 

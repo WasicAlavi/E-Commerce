@@ -20,7 +20,7 @@ const CategorySlider = () => {
                     className="mySwiper custom-swiper"
                 >
                     <SwiperSlide className="py-4">
-                        <Link to="/">
+                        <Link to="/category/Fashion">
                             <div
                                 className="item p-4 bg-white hover:bg-[#d0f1b9] text-[#40513B] hover:text-[#2a3c24] transition-all duration-300 rounded-md text-center shadow-lg hover:scale-105 flex items-center justify-center flex-col gap-3 font-montserrat"
                                 aria-label="Fashion category card"
@@ -35,7 +35,7 @@ const CategorySlider = () => {
                         </Link>
                     </SwiperSlide>
                     <SwiperSlide className="py-4">
-                        <Link to="/">
+                        <Link to="/category/Electronics">
                             <div
                                 className="item p-4 bg-white hover:bg-[#d0f1b9] text-[#40513B] hover:text-[#2a3c24] transition-all duration-300 rounded-md text-center shadow-lg hover:scale-105 flex items-center justify-center flex-col gap-3 font-montserrat"
                                 aria-label="Electronics category card"
@@ -50,7 +50,7 @@ const CategorySlider = () => {
                         </Link>
                     </SwiperSlide>
                     <SwiperSlide className="py-4">
-                        <Link to="/">
+                        <Link to="/category/Bags">
                             <div
                                 className="item p-4 bg-white hover:bg-[#d0f1b9] text-[#40513B] hover:text-[#2a3c24] transition-all duration-300 rounded-md text-center shadow-lg hover:scale-105 flex items-center justify-center flex-col gap-3 font-montserrat"
                                 aria-label="Bags category card"
@@ -65,7 +65,7 @@ const CategorySlider = () => {
                         </Link>
                     </SwiperSlide>
                     <SwiperSlide className="py-4">
-                        <Link to="/">
+                        <Link to="/category/Footwear">
                             <div
                                 className="item p-4 bg-white hover:bg-[#d0f1b9] text-[#40513B] hover:text-[#2a3c24] transition-all duration-300 rounded-md text-center shadow-lg hover:scale-105 flex items-center justify-center flex-col gap-3 font-montserrat"
                                 aria-label="Footwear category card"
@@ -80,7 +80,7 @@ const CategorySlider = () => {
                         </Link>
                     </SwiperSlide>
                     <SwiperSlide className="py-4">
-                        <Link to="/">
+                        <Link to="/category/Groceries">
                             <div
                                 className="item p-4 bg-white hover:bg-[#d0f1b9] text-[#40513B] hover:text-[#2a3c24] transition-all duration-300 rounded-md text-center shadow-lg hover:scale-105 flex items-center justify-center flex-col gap-3 font-montserrat"
                                 aria-label="Groceries category card"
@@ -95,7 +95,7 @@ const CategorySlider = () => {
                         </Link>
                     </SwiperSlide>
                     <SwiperSlide className="py-4">
-                        <Link to="/">
+                        <Link to="/category/Beauty">
                             <div
                                 className="item p-4 bg-white hover:bg-[#d0f1b9] text-[#40513B] hover:text-[#2a3c24] transition-all duration-300 rounded-md text-center shadow-lg hover:scale-105 flex items-center justify-center flex-col gap-3 font-montserrat"
                                 aria-label="Beauty category card"
@@ -110,7 +110,7 @@ const CategorySlider = () => {
                         </Link>
                     </SwiperSlide>
                     <SwiperSlide className="py-4">
-                        <Link to="/">
+                        <Link to="/category/Wellness">
                             <div
                                 className="item p-4 bg-white hover:bg-[#d0f1b9] text-[#40513B] hover:text-[#2a3c24] transition-all duration-300 rounded-md text-center shadow-lg hover:scale-105 flex items-center justify-center flex-col gap-3 font-montserrat"
                                 aria-label="Wellness category card"
@@ -125,7 +125,7 @@ const CategorySlider = () => {
                         </Link>
                     </SwiperSlide>
                     <SwiperSlide className="py-4">
-                        <Link to="/">
+                        <Link to="/category/Jewellery">
                             <div
                                 className="item p-4 bg-white hover:bg-[#d0f1b9] text-[#40513B] hover:text-[#2a3c24] transition-all duration-300 rounded-md text-center shadow-lg hover:scale-105 flex items-center justify-center flex-col gap-3 font-montserrat"
                                 aria-label="Jewellery category card"

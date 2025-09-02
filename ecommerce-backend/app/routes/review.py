@@ -42,13 +42,16 @@ async def get_reviews_by_product(
 ):
     """Get reviews by product ID"""
     reviews = await review_crud.get_reviews_by_product(product_id, skip=skip, limit=limit)
-    total = len(reviews)
-    
+    # Convert to ReviewOut (Pydantic) for serialization
+    reviews_out = [ReviewOut(**r.to_dict()) for r in reviews]
+    total = len(reviews_out)
+    average_rating = (
+        sum(r.rating for r in reviews_out) / total if total > 0 else 0.0
+    )
     return ReviewList(
-        reviews=reviews,
+        reviews=reviews_out,
         total=total,
-        skip=skip,
-        limit=limit
+        average_rating=average_rating
     )
 
 @router.get("/customer/{customer_id}", response_model=ReviewList)
@@ -76,12 +79,17 @@ async def get_reviews(
     """Get all reviews with pagination"""
     reviews = await review_crud.get_reviews(skip=skip, limit=limit)
     total = len(reviews)
-    
+    if total > 0:
+        average_rating = sum(r.rating for r in reviews) / total
+    else:
+        average_rating = 0.0
+
     return ReviewList(
         reviews=reviews,
         total=total,
         skip=skip,
-        limit=limit
+        limit=limit,
+        average_rating=average_rating
     )
 
 @router.put("/{review_id}", response_model=ReviewResponse)
@@ -203,4 +211,33 @@ async def get_helpful_reviews(product_id: int, limit: int = Query(10, ge=1, le=1
         total=len(reviews),
         skip=0,
         limit=limit
-    ) 
+    )
+
+@router.get("/check-purchase/{customer_id}/{product_id}")
+async def check_customer_purchase_status(customer_id: int, product_id: int):
+    """Check if a customer can review a specific product"""
+    try:
+        result = await review_crud.can_customer_review_product(customer_id, product_id)
+        return {
+            "success": True,
+            "message": "Purchase status checked successfully",
+            "data": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/reviewable-products/{customer_id}")
+async def get_customer_reviewable_products(customer_id: int):
+    """Get list of products that a customer can review"""
+    try:
+        product_ids = await review_crud.get_customer_reviewable_products(customer_id)
+        return {
+            "success": True,
+            "message": "Reviewable products retrieved successfully",
+            "data": {
+                "product_ids": product_ids,
+                "count": len(product_ids)
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) 

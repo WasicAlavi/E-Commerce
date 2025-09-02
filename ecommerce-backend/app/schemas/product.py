@@ -1,12 +1,20 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
+from .product_image import ProductImageOut
 
 class ProductBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200, description="Product name")
     description: str = Field(..., min_length=1, max_length=2000, description="Product description")
     price: float = Field(..., gt=0, description="Product price")
     stock: int = Field(..., ge=0, description="Stock")
+    brand: Optional[str] = Field(None, max_length=100, description="Product brand")
+    material: Optional[str] = Field(None, description="Product material")
+    colors: Optional[List[str]] = Field(default=[], description="Available colors")
+    sizes: Optional[List[str]] = Field(default=[], description="Available sizes")
+    care_instructions: Optional[str] = Field(None, description="Care instructions")
+    features: Optional[List[str]] = Field(default=[], description="Product features")
+    specifications: Optional[Dict[str, Any]] = Field(default={}, description="Product specifications")
 
     @validator('name')
     def validate_name(cls, v):
@@ -33,13 +41,20 @@ class ProductBase(BaseModel):
         return v
 
 class ProductCreate(ProductBase):
-    pass
+    category: Optional[str] = Field(None, description="Product category/tag")
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200, description="Product name")
     description: Optional[str] = Field(None, min_length=1, max_length=2000, description="Product description")
     price: Optional[float] = Field(None, gt=0, description="Product price")
     stock: Optional[int] = Field(None, ge=0, description="Stock")
+    brand: Optional[str] = Field(None, max_length=100, description="Product brand")
+    material: Optional[str] = Field(None, description="Product material")
+    colors: Optional[List[str]] = Field(None, description="Available colors")
+    sizes: Optional[List[str]] = Field(None, description="Available sizes")
+    care_instructions: Optional[str] = Field(None, description="Care instructions")
+    features: Optional[List[str]] = Field(None, description="Product features")
+    specifications: Optional[Dict[str, Any]] = Field(None, description="Product specifications")
 
     @validator('name')
     def validate_name(cls, v):
@@ -65,13 +80,7 @@ class ProductUpdate(BaseModel):
             raise ValueError('Stock cannot be negative')
         return v
 
-class ProductImageOut(BaseModel):
-    id: int = Field(..., description="Image ID")
-    image_url: str = Field(..., description="Image URL")
-    is_primary: bool = Field(..., description="Whether this is the primary image")
 
-    class Config:
-        from_attributes = True
 
 class ProductTagOut(BaseModel):
     id: int = Field(..., description="Tag ID")
@@ -85,6 +94,9 @@ class ProductOut(ProductBase):
     image_url: Optional[str] = Field(None, description="Primary image URL")
     images: Optional[List[ProductImageOut]] = Field(default=[], description="List of product images")
     tags: Optional[List[ProductTagOut]] = Field(default=[], description="List of product tags")
+    rating: Optional[float] = Field(None, ge=0.0, le=5.0, description="Average product rating")
+    reviews: int = Field(default=0, description="Number of reviews")
+    discount: float = Field(default=0.0, ge=0.0, le=1.0, description="Discount percentage (0.0 to 1.0)")
     created_at: Optional[datetime] = Field(None, description="Product creation date")
     updated_at: Optional[datetime] = Field(None, description="Product last update date")
 
@@ -96,6 +108,28 @@ class ProductWithDetails(ProductOut):
     total_reviews: int = Field(..., description="Total number of reviews")
     discount_amount: Optional[float] = Field(None, description="Current discount amount")
     final_price: Optional[float] = Field(None, description="Final price after discount")
+
+# New schema for compare products functionality
+class ProductForCompare(BaseModel):
+    """Schema specifically for CompareProducts component"""
+    id: int = Field(..., description="Product ID")
+    name: str = Field(..., description="Product name")
+    price: float = Field(..., description="Product price")
+    original_price: float = Field(..., description="Original price before discount")
+    image: Optional[str] = Field(None, description="Product image URL")
+    discount: float = Field(default=0.0, ge=0.0, le=1.0, description="Discount percentage")
+    rating: Optional[float] = Field(None, ge=0.0, le=5.0, description="Average product rating")
+    reviews: int = Field(default=0, description="Number of reviews")
+    brand: Optional[str] = Field(None, description="Product brand")
+    material: Optional[str] = Field(None, description="Product material")
+    color: Optional[str] = Field(None, description="Available colors")
+    size: Optional[str] = Field(None, description="Available sizes")
+    care: Optional[str] = Field(None, description="Care instructions")
+    features: List[str] = Field(default=[], description="Product features")
+    inStock: bool = Field(default=True, description="Stock availability")
+
+    class Config:
+        from_attributes = True
 
 # New schemas for ProductCard compatibility
 class ProductCard(BaseModel):

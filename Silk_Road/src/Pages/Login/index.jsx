@@ -6,6 +6,7 @@ import { styled } from '@mui/material/styles';
 import authService from '../../services/authService.js';
 import CustomAlert from '../../components/Alert';
 import { useAuth } from '../../AuthContext';
+import Cookies from 'js-cookie';
 
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
@@ -97,23 +98,29 @@ const Login = () => {
     setShowAlert(false);
 
     try {
-      // 1. Authenticate (simulate, or call your real login API here)
-      // Remove direct call to authService.login(formData)
-      // Instead, fetch user profile after authentication
-      // (If you have a real auth API, call it here and check credentials)
-      // For now, just proceed to fetch user profile
-      const profileRes = await fetch(`http://localhost:8000/api/v1/users/by-username/${formData.username}`);
-      if (profileRes.ok) {
-        const userProfile = await profileRes.json();
-        // 2. Call context login with full user object (includes customer_id)
-        login(userProfile);
+      const result = await authService.login({
+        username: formData.username,
+        password: formData.password,
+      });
+      
+      console.log('Login result:', result);
+      console.log('Token in cookies after login:', Cookies.get('token'));
+      console.log('User in cookies after login:', Cookies.get('user'));
+      
+      if (result.success) {
+        login(result.user, result.token); // Pass both user and token
         setAlertMessage('Login successful! Redirecting...');
         setShowAlert(true);
         setTimeout(() => {
-          navigate('/', { replace: true });
+          if (result.user.role === 'admin') {
+            navigate('/admin', { replace: true });
+          } else {
+            navigate(from, { replace: true });
+          }
         }, 1500);
       } else {
-        throw new Error('Invalid username or password');
+        setAlertMessage(result.error || 'Invalid username or password');
+        setShowAlert(true);
       }
     } catch (error) {
       setAlertMessage(error.message || 'Invalid username or password');

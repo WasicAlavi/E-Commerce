@@ -7,6 +7,10 @@ class WishlistItemBase(BaseModel):
 class WishlistItemCreate(WishlistItemBase):
     wishlist_id: int = Field(..., description="ID of the wishlist")
 
+class WishlistItemCreateFromPath(WishlistItemBase):
+    """Schema for creating wishlist items when wishlist_id is in URL path"""
+    pass
+
 class WishlistItemOut(WishlistItemBase):
     id: int = Field(..., description="Wishlist item ID")
     wishlist_id: int = Field(..., description="ID of the wishlist")

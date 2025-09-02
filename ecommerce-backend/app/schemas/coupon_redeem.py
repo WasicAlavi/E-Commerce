@@ -14,6 +14,7 @@ class CouponRedeemCreate(BaseModel):
     coupon_id: int = Field(..., description="ID of the coupon")
     customer_id: int = Field(..., description="ID of the customer")
     order_id: int = Field(..., description="ID of the order")
+    discount_amount: float = Field(..., description="Discount amount applied")
     redeemed_at: Optional[datetime] = Field(None, description="Date and time when coupon was redeemed")
 
 class CouponRedeemOut(CouponRedeemBase):

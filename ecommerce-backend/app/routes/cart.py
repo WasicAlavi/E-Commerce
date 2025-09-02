@@ -5,13 +5,24 @@ from app.schemas.cart import (
     CartCreate, CartOut, CartWithDetails, CartList, CartResponse
 )
 from app.schemas.cart_item import CartItemCreate, CartItemUpdate, CartItemOut
+from app.utils.jwt_utils import get_current_user, get_current_admin
+from app.database import get_db_connection
 
 router = APIRouter(prefix="/carts", tags=["carts"])
 
 @router.post("/", response_model=CartResponse)
-async def create_cart(cart_data: CartCreate):
+async def create_cart(cart_data: CartCreate, current_user: dict = Depends(get_current_user)):
     """Create a new cart"""
     try:
+        # Ensure the cart belongs to the authenticated user's customer
+        from app.models.customer import Customer
+        customer = await Customer.get_by_user_id(current_user["user_id"])
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        
+        # Update cart_data with customer_id
+        cart_data.customer_id = customer.id
+        
         cart = await cart_crud.create_cart(cart_data)
         return CartResponse(
             success=True,
@@ -38,15 +49,20 @@ async def get_cart(cart_id: int):
     )
 
 @router.get("/customer/{customer_id}", response_model=CartResponse)
-async def get_cart_by_customer(customer_id: int):
+async def get_cart_by_customer(customer_id: int, current_user: dict = Depends(get_current_user)):
     """Get cart by customer ID"""
+    # Verify the customer belongs to the authenticated user
+    from app.models.customer import Customer
+    customer = await Customer.get_by_user_id(current_user["user_id"])
+    if not customer or customer.id != customer_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
     cart = await cart_crud.get_cart_by_customer(customer_id)
     if not cart:
         raise HTTPException(status_code=404, detail="Cart not found")
     
-    cart_dict = cart.to_dict()
-    if 'items' in cart_dict and isinstance(cart_dict['items'], list):
-        cart_dict['items'] = [item.to_dict() if hasattr(item, 'to_dict') else item for item in cart_dict['items']]
+    # Get cart with items
+    cart_dict = await cart.get_with_items()
     return CartResponse(
         success=True,
         message="Cart retrieved successfully",
@@ -68,6 +84,49 @@ async def get_carts(
         skip=skip,
         limit=limit
     )
+
+@router.get("/admin/all", dependencies=[Depends(get_current_admin)])
+async def get_all_carts_for_admin():
+    """Get all carts with totals and item counts for admin"""
+    from app.models.cart import Cart
+    from app.models.cart_item import CartItem
+    
+    pool = await get_db_connection()
+    async with pool.acquire() as conn:
+        # Get only carts that have items (non-empty carts)
+        rows = await conn.fetch("""
+            SELECT DISTINCT
+                c.id, c.customer_id, c.creation_date, c.is_active, c.is_deleted,
+                CONCAT(cust.first_name, ' ', cust.last_name) as customer_name
+            FROM carts c
+            LEFT JOIN customers cust ON c.customer_id = cust.id
+            INNER JOIN cart_items ci ON c.id = ci.cart_id
+            WHERE ci.is_deleted = FALSE  -- Only include carts with non-deleted items
+            ORDER BY c.creation_date DESC
+        """)
+        
+        carts_with_details = []
+        for row in rows:
+            cart_data = dict(row)
+            
+            # Get total items and price for this cart
+            total_items = await CartItem.get_cart_total_items(cart_data['id'])
+            total_price = await CartItem.get_cart_total_price(cart_data['id'])
+            
+            # Only include carts that actually have items
+            if total_items > 0:
+                cart_data['total_items'] = total_items
+                cart_data['total_price'] = total_price
+                carts_with_details.append(cart_data)
+        
+        return {
+            "success": True,
+            "message": "Carts retrieved successfully",
+            "data": {
+                "carts": carts_with_details,
+                "total": len(carts_with_details)
+            }
+        }
 
 @router.delete("/{cart_id}")
 async def delete_cart(cart_id: int):
@@ -146,6 +205,17 @@ async def get_cart_items(cart_id: int):
     """Get all items in a cart"""
     items = await cart_crud.get_cart_items(cart_id)
     return [CartItemOut.model_validate(item) for item in items]
+
+@router.get("/{cart_id}/items-with-products", dependencies=[Depends(get_current_admin)])
+async def get_cart_items_with_products(cart_id: int):
+    """Get all items in a cart with product details"""
+    from app.models.cart_item import CartItem
+    items = await CartItem.get_by_cart_id_with_products(cart_id)
+    return {
+        "success": True,
+        "message": "Cart items with products retrieved successfully",
+        "data": items
+    }
 
 @router.put("/items/{item_id}/quantity")
 async def update_cart_item_quantity(item_id: int, quantity: int):

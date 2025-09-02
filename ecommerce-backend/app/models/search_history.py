@@ -140,6 +140,126 @@ class SearchHistory:
             """, f"{partial_query}%", limit)
             return [row['query'] for row in rows]
 
+    @classmethod
+    async def track_search_query(cls, customer_id: int, query: str, has_results: bool = True) -> 'SearchHistory':
+        """Track a search query with result status"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            # Add a column to track if search had results
+            try:
+                await conn.execute("""
+                    ALTER TABLE search_histories 
+                    ADD COLUMN IF NOT EXISTS has_results BOOLEAN DEFAULT TRUE
+                """)
+            except Exception:
+                pass  # Column might already exist
+            
+            row = await conn.fetchrow("""
+                INSERT INTO search_histories (customer_id, query, search_date, has_results)
+                VALUES ($1, $2, $3, $4)
+                RETURNING id, query, search_date, customer_id, has_results
+            """, customer_id, query, datetime.now(), has_results)
+            return cls(**dict(row))
+
+    @classmethod
+    async def get_unmatched_searches(cls, limit: int = 20) -> List[Dict[str, Any]]:
+        """Get searches that returned no results"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            # Add has_results column if it doesn't exist
+            try:
+                await conn.execute("""
+                    ALTER TABLE search_histories 
+                    ADD COLUMN IF NOT EXISTS has_results BOOLEAN DEFAULT TRUE
+                """)
+            except Exception:
+                pass
+            
+            rows = await conn.fetch("""
+                SELECT 
+                    sh.query,
+                    COUNT(*) as search_count,
+                    MIN(sh.search_date) as first_searched,
+                    MAX(sh.search_date) as last_searched
+                FROM search_histories sh
+                WHERE sh.has_results = FALSE
+                GROUP BY sh.query
+                ORDER BY search_count DESC, last_searched DESC
+                LIMIT $1
+            """, limit)
+            return [dict(row) for row in rows]
+
+    @classmethod
+    async def get_search_analytics(cls, days: int = 30) -> Dict[str, Any]:
+        """Get search analytics for the specified number of days"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            # Add has_results column if it doesn't exist
+            try:
+                await conn.execute("""
+                    ALTER TABLE search_histories 
+                    ADD COLUMN IF NOT EXISTS has_results BOOLEAN DEFAULT TRUE
+                """)
+            except Exception:
+                pass
+            
+            # Get total searches
+            total_searches = await conn.fetchval("""
+                SELECT COUNT(*) 
+                FROM search_histories 
+                WHERE search_date >= CURRENT_DATE - INTERVAL '$1 days'
+            """, days)
+            
+            # Get searches with results
+            successful_searches = await conn.fetchval("""
+                SELECT COUNT(*) 
+                FROM search_histories 
+                WHERE search_date >= CURRENT_DATE - INTERVAL '$1 days'
+                AND has_results = TRUE
+            """, days)
+            
+            # Get searches without results
+            failed_searches = await conn.fetchval("""
+                SELECT COUNT(*) 
+                FROM search_histories 
+                WHERE search_date >= CURRENT_DATE - INTERVAL '$1 days'
+                AND has_results = FALSE
+            """, days)
+            
+            # Get most popular searches
+            popular_searches = await conn.fetch("""
+                SELECT 
+                    query,
+                    COUNT(*) as search_count
+                FROM search_histories 
+                WHERE search_date >= CURRENT_DATE - INTERVAL '$1 days'
+                GROUP BY query
+                ORDER BY search_count DESC
+                LIMIT 10
+            """, days)
+            
+            # Get most failed searches
+            failed_search_terms = await conn.fetch("""
+                SELECT 
+                    query,
+                    COUNT(*) as search_count
+                FROM search_histories 
+                WHERE search_date >= CURRENT_DATE - INTERVAL '$1 days'
+                AND has_results = FALSE
+                GROUP BY query
+                ORDER BY search_count DESC
+                LIMIT 10
+            """, days)
+            
+            return {
+                "total_searches": total_searches or 0,
+                "successful_searches": successful_searches or 0,
+                "failed_searches": failed_searches or 0,
+                "success_rate": (successful_searches / total_searches * 100) if total_searches else 0,
+                "popular_searches": [dict(row) for row in popular_searches],
+                "failed_search_terms": [dict(row) for row in failed_search_terms]
+            }
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {

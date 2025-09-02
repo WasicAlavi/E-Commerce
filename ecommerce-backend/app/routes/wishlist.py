@@ -4,14 +4,24 @@ from app.crud import wishlist_crud
 from app.schemas.wishlist import (
     WishlistCreate, WishlistOut, WishlistWithItems, WishlistList, WishlistResponse
 )
-from app.schemas.wishlist_item import WishlistItemCreate, WishlistItemOut
+from app.schemas.wishlist_item import WishlistItemCreate, WishlistItemOut, WishlistItemCreateFromPath
+from app.utils.jwt_utils import get_current_user
 
 router = APIRouter(prefix="/wishlists", tags=["wishlists"])
 
 @router.post("/", response_model=WishlistResponse)
-async def create_wishlist(wishlist_data: WishlistCreate):
+async def create_wishlist(wishlist_data: WishlistCreate, current_user: dict = Depends(get_current_user)):
     """Create a new wishlist"""
     try:
+        # Ensure the wishlist belongs to the authenticated user's customer
+        from app.models.customer import Customer
+        customer = await Customer.get_by_user_id(current_user["user_id"])
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        
+        # Update wishlist_data with customer_id
+        wishlist_data.customer_id = customer.id
+        
         wishlist = await wishlist_crud.create_wishlist(wishlist_data)
         return WishlistResponse(
             success=True,
@@ -35,16 +45,24 @@ async def get_wishlist(wishlist_id: int):
     )
 
 @router.get("/customer/{customer_id}", response_model=WishlistResponse)
-async def get_wishlist_by_customer(customer_id: int):
+async def get_wishlist_by_customer(customer_id: int, current_user: dict = Depends(get_current_user)):
     """Get wishlist by customer ID"""
+    # Verify the customer belongs to the authenticated user
+    from app.models.customer import Customer
+    customer = await Customer.get_by_user_id(current_user["user_id"])
+    if not customer or customer.id != customer_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
     wishlist = await wishlist_crud.get_wishlist_by_customer(customer_id)
     if not wishlist:
         raise HTTPException(status_code=404, detail="Wishlist not found")
     
+    # Get wishlist with items
+    wishlist_dict = await wishlist.get_with_items()
     return WishlistResponse(
         success=True,
         message="Wishlist retrieved successfully",
-        data=wishlist
+        data=wishlist_dict
     )
 
 @router.get("/", response_model=WishlistList)
@@ -127,16 +145,17 @@ async def move_to_cart(wishlist_id: int, product_id: int, cart_id: int):
     return {"success": True, "message": "Item moved to cart successfully"}
 
 # Wishlist Item Routes
-@router.post("/{wishlist_id}/items", response_model=dict)
-async def add_wishlist_item(wishlist_id: int, item_data: WishlistItemCreate):
+@router.post("/{wishlist_id}/items", response_model=WishlistItemOut)
+async def add_wishlist_item(wishlist_id: int, item_data: WishlistItemCreateFromPath):
     """Add item to wishlist"""
     try:
-        item = await wishlist_crud.add_wishlist_item(item_data)
-        return {
-            "success": True,
-            "message": "Item added to wishlist successfully",
-            "data": item
-        }
+        # Create WishlistItemCreate with wishlist_id from path parameter
+        create_data = WishlistItemCreate(
+            wishlist_id=wishlist_id,
+            product_id=item_data.product_id
+        )
+        item = await wishlist_crud.add_wishlist_item(create_data)
+        return WishlistItemOut.model_validate(item)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -152,7 +171,7 @@ async def get_wishlist_item(item_id: int):
 async def get_wishlist_items(wishlist_id: int):
     """Get all items in a wishlist"""
     items = await wishlist_crud.get_wishlist_items(wishlist_id)
-    return items
+    return [WishlistItemOut.model_validate(item) for item in items]
 
 @router.delete("/items/{item_id}")
 async def remove_wishlist_item(item_id: int):

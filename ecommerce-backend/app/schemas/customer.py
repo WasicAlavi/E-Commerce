@@ -1,21 +1,56 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr, validator
 from app.schemas.address import AddressOut
 from app.schemas.user import UserOut
+from datetime import date
 
 class CustomerBase(BaseModel):
-    pass 
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    gender: Optional[str] = None
 
-class CustomerCreate(BaseModel):
-    user_id: int = Field(..., description="ID of the user")
+    @validator('date_of_birth', pre=True)
+    def validate_date_of_birth(cls, v):
+        if v == "" or v is None:
+            return None
+        if isinstance(v, str):
+            try:
+                return date.fromisoformat(v)
+            except ValueError:
+                raise ValueError('Invalid date format. Use YYYY-MM-DD')
+        return v
 
-class CustomerUpdate(BaseModel):
-    user_id: Optional[int] = Field(None, description="ID of the user")
+    @validator('gender')
+    def validate_gender(cls, v):
+        if v is not None and v not in ['Male', 'Female', 'Other']:
+            raise ValueError('Gender must be Male, Female, or Other')
+        return v
+
+class CustomerCreate(CustomerBase):
+    user_id: int
+
+class CustomerUpdate(CustomerBase):
+    pass
 
 class CustomerOut(CustomerBase):
-    id: int = Field(..., description="Customer ID")
-    user_id: int = Field(..., description="ID of the user")
-    addresses: Optional[List[AddressOut]] = Field(default=[], description="List of customer addresses")
+    id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True
+
+class CustomerProfileOut(BaseModel):
+    id: int
+    user_id: int
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    email: Optional[str] = None
+    username: Optional[str] = None
 
     class Config:
         from_attributes = True

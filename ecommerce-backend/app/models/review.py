@@ -116,6 +116,19 @@ class Review:
             return cls(**dict(row)) if row else None
 
     @classmethod
+    async def get_all(cls, skip: int = 0, limit: int = 100) -> List['Review']:
+        """Get all reviews with pagination"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT id, rating, comment, review_date, customer_id, product_id
+                FROM reviews 
+                ORDER BY review_date DESC
+                LIMIT $1 OFFSET $2
+            """, limit, skip)
+            return [cls(**dict(row)) for row in rows]
+
+    @classmethod
     async def get_product_average_rating(cls, product_id: int) -> float:
         """Get average rating for a product"""
         pool = await get_db_connection()

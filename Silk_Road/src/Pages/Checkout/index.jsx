@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -10,6 +10,10 @@ import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import Checkbox from '@mui/material/Checkbox';
 import { FaArrowLeft, FaCreditCard, FaPaypal, FaMobile, FaWallet } from 'react-icons/fa';
+import { useAuth } from '../../AuthContext';
+import cartService from '../../services/cartService';
+import AddressSelector from '../../components/AddressSelector';
+import CustomAlert from '../../components/Alert';
 
 const StyledButton = styled(Button)(({ theme }) => ({
   fontFamily: 'Montserrat, sans-serif',
@@ -50,7 +54,42 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 }));
 
 const Checkout = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
+  const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [addresses, setAddresses] = useState([]);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  // Alert state management
+  const [alert, setAlert] = useState({
+    show: false,
+    severity: 'info',
+    title: '',
+    message: ''
+  });
+
+  // Function to show custom alert
+  const showAlert = (severity, title, message) => {
+    setAlert({
+      show: true,
+      severity,
+      title,
+      message
+    });
+  };
+
+  // Function to hide alert
+  const hideAlert = () => {
+    setAlert({
+      show: false,
+      severity: 'info',
+      title: '',
+      message: ''
+    });
+  };
   const [shippingInfo, setShippingInfo] = useState({
     firstName: '',
     lastName: '',
@@ -78,7 +117,9 @@ const Checkout = () => {
   });
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Mock cart data
+
+
+  // Mock cart data for demonstration
   const cartItems = [
     {
       id: 1,
@@ -96,6 +137,43 @@ const Checkout = () => {
     }
   ];
 
+  // Fetch addresses on component mount
+  useEffect(() => {
+    if (user?.customer_id) {
+      fetchAddresses();
+    }
+  }, [user]);
+
+  const fetchAddresses = async () => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/addresses/customer/${user.customer_id}`);
+      const data = await response.json();
+      if (data.success) {
+        setAddresses(data.data);
+        // Set default address if available
+        if (data.data.length > 0) {
+          setSelectedAddressId(data.data[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+    }
+  };
+
+  const handleAddressSelect = (addressId) => {
+    if (!addressId || addressId === "null") {
+      showAlert('error', 'Invalid Address', 'Please select a valid address!');
+      return;
+    }
+    setSelectedAddressId(Number(addressId));
+    setAddressSelectorOpen(false);
+  };
+
+  const handleAddNewAddress = () => {
+    navigate('/profile');
+  };
+
+  // Calculate totals based on cart items
   const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   const shipping = subtotal >= 3000 ? 0 : 200;
   const total = subtotal + shipping;
@@ -114,37 +192,157 @@ const Checkout = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!termsAccepted) {
-      alert('Please accept the terms and conditions');
+      showAlert('warning', 'Terms Required', 'Please accept the terms and conditions');
       return;
     }
-    console.log('Order placed:', {
-      shippingInfo,
-      billingInfo,
-      paymentMethod,
-      cartItems,
-      total
-    });
-    alert('Order placed successfully!');
+
+    if (!selectedAddressId) {
+      showAlert('warning', 'Address Required', 'Please select a shipping address');
+      setAddressSelectorOpen(true);
+      return;
+    }
+
+    setCheckoutLoading(true);
+    try {
+      // Prepare order data
+      const orderData = {
+        customer_id: user.customer_id,
+        items: cartItems.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          price: item.price,
+          originalPrice: item.price,
+          discount: 0,
+          name: item.name,
+          image: item.image,
+          size: item.selectedSize,
+          color: item.selectedColor,
+        })),
+        subtotal: subtotal,
+        discount: 0,
+        shipping: shipping,
+        total: total,
+        coupon: null,
+      };
+
+      console.log('Order data:', orderData);
+      console.log('Using address ID:', selectedAddressId);
+
+      // Use cartService to place order
+      const result = await cartService.placeOrder(orderData, selectedAddressId);
+      
+      if (result.success && result.redirect) {
+        // Payment gateway will handle the redirect
+        showAlert('info', 'Redirecting to Payment', 'Redirecting to payment gateway...');
+      } else if (result.success) {
+        // Direct order placement (fallback)
+        showAlert('success', 'Order Placed', 'Order placed successfully!');
+        navigate('/order-confirmation', { state: { orderId: result.orderId } });
+      } else {
+        showAlert('error', 'Order Failed', result.error || 'Failed to place order');
+      }
+    } catch (error) {
+      console.error('Error placing order:', error);
+      showAlert('error', 'Error', 'Error placing order. Please try again.');
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   const renderShippingForm = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Address Selection */}
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold text-[#40513B] mb-4">Shipping Address</h3>
+        
+        {addresses.length === 0 ? (
+          <div className="text-center py-4">
+            <p className="text-gray-600 mb-4">No shipping addresses found.</p>
+            <StyledButton
+              variant="contained"
+              onClick={handleAddNewAddress}
+              sx={{ backgroundColor: '#9DC08B', color: '#fff' }}
+            >
+              Add New Address
+            </StyledButton>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {addresses.map((address) => (
+              <div
+                key={address.id}
+                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  selectedAddressId === address.id
+                    ? 'border-[#9DC08B] bg-[#F6FFF2]'
+                    : 'border-gray-200 hover:border-[#9DC08B]'
+                }`}
+                onClick={() => setSelectedAddressId(address.id)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="font-medium text-[#40513B]">
+                      {address.full_name}
+                    </p>
+                    <p className="text-gray-600 text-sm mt-1">
+                      {address.address_line1}
+                      {address.address_line2 && `, ${address.address_line2}`}
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      {address.city}, {address.state} {address.postal_code}
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      Phone: {address.phone}
+                    </p>
+                  </div>
+                  <div className="ml-4">
+                    {selectedAddressId === address.id && (
+                      <div className="w-5 h-5 bg-[#9DC08B] rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            <div className="pt-2">
+              <StyledButton
+                variant="outlined"
+                onClick={handleAddNewAddress}
+                sx={{ 
+                  borderColor: '#9DC08B', 
+                  color: '#40513B',
+                  '&:hover': {
+                    borderColor: '#40513B',
+                    backgroundColor: '#9DC08B',
+                    color: 'white',
+                  }
+                }}
+              >
+                Add New Address
+              </StyledButton>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Manual Shipping Form (Optional) */}
+      <div className="border-t pt-6">
+        <h3 className="text-lg font-semibold text-[#40513B] mb-4">Additional Shipping Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StyledTextField
           fullWidth
           label="First Name"
           value={shippingInfo.firstName}
           onChange={(e) => setShippingInfo({...shippingInfo, firstName: e.target.value})}
-          required
         />
         <StyledTextField
           fullWidth
           label="Last Name"
           value={shippingInfo.lastName}
           onChange={(e) => setShippingInfo({...shippingInfo, lastName: e.target.value})}
-          required
         />
       </div>
       
@@ -199,6 +397,7 @@ const Checkout = () => {
           required
         />
       </div>
+    </div>
     </div>
   );
 
@@ -376,14 +575,22 @@ const Checkout = () => {
         <div className="space-y-4">
           {cartItems.map((item) => (
             <div key={item.id} className="flex items-center gap-4">
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-16 h-16 object-cover rounded-md"
-              />
+              <div className="product-image-container w-16 h-16">
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-full object-cover rounded-md product-image-zoom"
+                />
+              </div>
               <div className="flex-1">
                 <h4 className="font-medium text-[#40513B]">{item.name}</h4>
                 <p className="text-sm text-[#40513B]">Quantity: {item.quantity}</p>
+                {item.selectedSize && (
+                  <p className="text-sm text-[#40513B]">Size: {item.selectedSize}</p>
+                )}
+                {item.selectedColor && (
+                  <p className="text-sm text-[#40513B]">Color: {item.selectedColor}</p>
+                )}
               </div>
               <div className="text-right">
                 <p className="font-semibold text-[#40513B]">৳{item.price * item.quantity}</p>
@@ -455,11 +662,23 @@ const Checkout = () => {
   return (
     <div className="bg-[#EDF6E5] min-h-screen py-8 font-montserrat">
       <div className="container mx-auto px-4">
+        {/* Custom Alert */}
+        <CustomAlert
+          show={alert.show}
+          severity={alert.severity}
+          title={alert.title}
+          message={alert.message}
+          onClose={hideAlert}
+          autoHideDuration={5000}
+        />
+
         <div className="flex items-center gap-2 mb-6">
           <Link to="/cart" className="text-[#40513B] hover:text-[#9DC08B]">
             <FaArrowLeft />
           </Link>
-          <h1 className="text-3xl font-bold text-[#40513B]">Checkout</h1>
+          <h1 className="text-3xl font-bold text-[#40513B]">
+            Checkout
+          </h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -520,8 +739,12 @@ const Checkout = () => {
                 <StyledButton
                   variant="contained"
                   onClick={handleNext}
+                  disabled={checkoutLoading}
                 >
-                  {activeStep === steps.length - 1 ? 'Place Order' : 'Next'}
+                  {activeStep === steps.length - 1 
+                    ? (checkoutLoading ? 'Processing...' : 'Place Order') 
+                    : 'Next'
+                  }
                 </StyledButton>
               </div>
             </div>
@@ -531,6 +754,32 @@ const Checkout = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg p-6 shadow-md sticky top-4">
               <h2 className="text-xl font-bold text-[#40513B] mb-6">Order Summary</h2>
+              
+              {/* Product Items */}
+              <div className="space-y-4 mb-6">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="product-image-container w-16 h-16">
+                      <img 
+                        src={item.image} 
+                        alt={item.name}
+                        className="w-full h-full object-cover rounded product-image-zoom"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-[#40513B]">{item.name}</h3>
+                      <p className="text-sm text-gray-600">
+                        Qty: {item.quantity}
+                        {item.selectedSize && ` | Size: ${item.selectedSize}`}
+                        {item.selectedColor && ` | Color: ${item.selectedColor}`}
+                      </p>
+                      <p className="text-sm font-medium text-[#9DC08B]">
+                        ৳{item.price} × {item.quantity}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
               
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between">

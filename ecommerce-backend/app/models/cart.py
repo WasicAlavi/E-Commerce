@@ -4,12 +4,13 @@ from app.database import get_db_connection
 
 class Cart:
     def __init__(self, id: int, customer_id: int, creation_date: datetime, 
-                 is_active: bool = True, is_deleted: bool = False):
+                 is_active: bool = True, is_deleted: bool = False, deleted_at: datetime = None):
         self.id = id
         self.customer_id = customer_id
         self.creation_date = creation_date
         self.is_active = is_active
         self.is_deleted = is_deleted
+        self.deleted_at = deleted_at
 
     @classmethod
     async def create_table(cls):
@@ -100,13 +101,28 @@ class Cart:
             return [cls(**dict(row)) for row in rows]
 
     @classmethod
-    async def get_by_customer_id(cls, customer_id: int) -> Optional['Cart']:
+    async def get_all(cls, skip: int = 0, limit: int = 100) -> List['Cart']:
+        """Get all carts with pagination"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM carts WHERE customer_id = $1 AND is_active = TRUE LIMIT 1",
-                customer_id
-            )
+            rows = await conn.fetch("""
+                SELECT id, customer_id, creation_date, is_active, is_deleted
+                FROM carts 
+                ORDER BY creation_date DESC
+                LIMIT $1 OFFSET $2
+            """, limit, skip)
+            return [cls(**dict(row)) for row in rows]
+
+    @classmethod
+    async def get_by_customer_id(cls, customer_id: int, include_deleted: bool = False) -> Optional['Cart']:
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            query = "SELECT * FROM carts WHERE customer_id = $1 AND is_active = TRUE"
+            params = [customer_id]
+            if not include_deleted:
+                query += " AND is_deleted = FALSE"
+            query += " LIMIT 1"
+            row = await conn.fetchrow(query, *params)
             return cls(**dict(row)) if row else None
 
     async def deactivate(self) -> 'Cart':
@@ -159,5 +175,60 @@ class Cart:
             "customer_id": self.customer_id,
             "creation_date": self.creation_date.isoformat() if self.creation_date else None,
             "is_active": self.is_active,
-            "is_deleted": self.is_deleted
+            "is_deleted": self.is_deleted,
+            "items": []  # Will be populated by get_with_items method
         }
+
+    async def get_with_items(self) -> Dict[str, Any]:
+        """Get cart with items"""
+        from app.models.cart_item import CartItem
+        
+        cart_dict = self.to_dict()
+        items = await CartItem.get_by_cart_id(self.id)
+        cart_dict["items"] = [item.to_dict() for item in items]
+        return cart_dict
+
+    async def clear_items(self) -> bool:
+        """Clear all items from cart"""
+        from app.models.cart_item import CartItem
+        
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            try:
+                await conn.execute("DELETE FROM cart_items WHERE cart_id = $1", self.id)
+                return True
+            except Exception as e:
+                print(f"Error clearing cart items: {e}")
+                return False
+
+    @classmethod
+    async def get_total(cls, cart_id: int) -> float:
+        """Get total price for a cart"""
+        from app.models.cart_item import CartItem
+        return await CartItem.get_cart_total_price(cart_id)
+
+    @classmethod
+    async def get_with_details(cls, cart_id: int) -> Optional[Dict[str, Any]]:
+        """Get cart with customer and item details"""
+        cart = await cls.get_by_id(cart_id)
+        if not cart:
+            return None
+        
+        cart_dict = cart.to_dict()
+        
+        # Get customer details
+        from app.models.customer import Customer
+        customer = await Customer.get_by_id(cart.customer_id)
+        if customer:
+            cart_dict["customer"] = customer.to_dict()
+        
+        # Get items with product details
+        from app.models.cart_item import CartItem
+        items = await CartItem.get_by_cart_id_with_products(cart_id)
+        cart_dict["items"] = items
+        
+        # Get total
+        cart_dict["total_price"] = await cls.get_total(cart_id)
+        cart_dict["total_items"] = await CartItem.get_cart_total_items(cart_id)
+        
+        return cart_dict

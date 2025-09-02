@@ -22,10 +22,54 @@ async def create_coupon(coupon_data: CouponCreate):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{coupon_id}", response_model=CouponResponse)
-async def get_coupon(coupon_id: int):
-    """Get coupon by ID"""
-    coupon = await coupon_crud.get_coupon_by_id(coupon_id)
+@router.post("/validate", response_model=CouponValidationResponse)
+async def validate_coupon(validation_data: CouponValidation):
+    """Validate a coupon for a customer"""
+    validation_result = await coupon_crud.validate_coupon(validation_data)
+    return CouponValidationResponse(
+        success=True,
+        message="Coupon validation completed",
+        data=validation_result
+    )
+
+@router.post("/redeem", response_model=dict)
+async def redeem_coupon(redeem_data: CouponRedeemCreate):
+    """Redeem a coupon"""
+    try:
+        redemption = await coupon_crud.redeem_coupon(redeem_data)
+        return {
+            "success": True,
+            "message": "Coupon redeemed successfully",
+            "data": redemption.to_dict()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/active/", response_model=ActiveCouponList)
+async def get_active_coupons():
+    """Get all active coupons"""
+    coupons = await coupon_crud.get_active_coupons()
+    return ActiveCouponList(
+        coupons=coupons,
+        total=len(coupons)
+    )
+
+@router.get("/expired/", response_model=List[CouponOut])
+async def get_expired_coupons():
+    """Get expired coupons"""
+    coupons = await coupon_crud.get_expired_coupons()
+    return coupons
+
+@router.get("/upcoming/", response_model=List[CouponOut])
+async def get_upcoming_coupons():
+    """Get upcoming coupons"""
+    coupons = await coupon_crud.get_upcoming_coupons()
+    return coupons
+
+@router.get("/code/{code}", response_model=CouponResponse)
+async def get_coupon_by_code(code: str):
+    """Get coupon by code"""
+    coupon = await coupon_crud.get_coupon_by_code(code)
     if not coupon:
         raise HTTPException(status_code=404, detail="Coupon not found")
     
@@ -35,10 +79,16 @@ async def get_coupon(coupon_id: int):
         data=coupon
     )
 
-@router.get("/code/{code}", response_model=CouponResponse)
-async def get_coupon_by_code(code: str):
-    """Get coupon by code"""
-    coupon = await coupon_crud.get_coupon_by_code(code)
+@router.get("/customer/{customer_id}/history", response_model=List[CouponRedeemOut])
+async def get_customer_coupon_history(customer_id: int):
+    """Get coupon redemption history for a customer"""
+    redemptions = await coupon_crud.get_customer_coupon_history(customer_id)
+    return redemptions
+
+@router.get("/{coupon_id}", response_model=CouponResponse)
+async def get_coupon(coupon_id: int):
+    """Get coupon by ID"""
+    coupon = await coupon_crud.get_coupon_by_id(coupon_id)
     if not coupon:
         raise HTTPException(status_code=404, detail="Coupon not found")
     
@@ -64,15 +114,6 @@ async def get_coupons(
         limit=limit
     )
 
-@router.get("/active/", response_model=ActiveCouponList)
-async def get_active_coupons():
-    """Get all active coupons"""
-    coupons = await coupon_crud.get_active_coupons()
-    return ActiveCouponList(
-        coupons=coupons,
-        total=len(coupons)
-    )
-
 @router.put("/{coupon_id}", response_model=CouponResponse)
 async def update_coupon(coupon_id: int, coupon_data: CouponUpdate):
     """Update coupon"""
@@ -94,16 +135,6 @@ async def delete_coupon(coupon_id: int):
         raise HTTPException(status_code=404, detail="Coupon not found")
     
     return {"success": True, "message": "Coupon deleted successfully"}
-
-@router.post("/validate", response_model=CouponValidationResponse)
-async def validate_coupon(validation_data: CouponValidation):
-    """Validate a coupon for a customer"""
-    validation_result = await coupon_crud.validate_coupon(validation_data)
-    return CouponValidationResponse(
-        success=True,
-        message="Coupon validation completed",
-        data=validation_result
-    )
 
 @router.post("/apply/{coupon_code}")
 async def apply_coupon(coupon_code: str, order_amount: float):
@@ -154,43 +185,11 @@ async def deactivate_coupon(coupon_id: int):
         data=coupon
     )
 
-@router.get("/expired/", response_model=List[CouponOut])
-async def get_expired_coupons():
-    """Get expired coupons"""
-    coupons = await coupon_crud.get_expired_coupons()
-    return coupons
-
-@router.get("/upcoming/", response_model=List[CouponOut])
-async def get_upcoming_coupons():
-    """Get upcoming coupons"""
-    coupons = await coupon_crud.get_upcoming_coupons()
-    return coupons
-
-# Coupon Redeem Routes
-@router.post("/redeem", response_model=dict)
-async def redeem_coupon(redeem_data: CouponRedeemCreate):
-    """Redeem a coupon"""
-    try:
-        redemption = await coupon_crud.redeem_coupon(redeem_data)
-        return {
-            "success": True,
-            "message": "Coupon redeemed successfully",
-            "data": redemption
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
 @router.get("/{coupon_id}/redemptions", response_model=List[CouponRedeemOut])
 async def get_coupon_redemptions(coupon_id: int):
     """Get redemptions for a coupon"""
     redemptions = await coupon_crud.get_coupon_redemptions(coupon_id)
     return redemptions
-
-@router.get("/customer/{customer_id}/history", response_model=List[CouponRedeemOut])
-async def get_customer_coupon_history(customer_id: int):
-    """Get coupon redemption history for a customer"""
-    history = await coupon_crud.get_customer_coupon_history(customer_id)
-    return history
 
 @router.get("/{coupon_id}/check-redeemed/{customer_id}")
 async def check_coupon_already_redeemed(coupon_id: int, customer_id: int):
@@ -199,5 +198,7 @@ async def check_coupon_already_redeemed(coupon_id: int, customer_id: int):
     return {
         "success": True,
         "message": "Coupon redemption check completed",
-        "data": {"already_redeemed": already_redeemed}
+        "data": {
+            "already_redeemed": already_redeemed
+        }
     } 

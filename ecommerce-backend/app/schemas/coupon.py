@@ -15,6 +15,7 @@ class CouponBase(BaseModel):
     used: int = Field(default=0, ge=0, description="Number of times coupon has been used")
     valid_from: datetime = Field(..., description="Start date and time of coupon validity")
     valid_until: datetime = Field(..., description="End date and time of coupon validity")
+    is_active: Optional[bool] = Field(default=True, description="Whether coupon is active")
 
     @validator('value')
     def validate_value(cls, v):
@@ -40,6 +41,13 @@ class CouponBase(BaseModel):
             raise ValueError('Valid until must be after valid from')
         return v
 
+    @validator('valid_from', 'valid_until')
+    def validate_datetime_timezone(cls, v):
+        """Ensure datetime is timezone-naive for database storage"""
+        if v and v.tzinfo is not None:
+            return v.replace(tzinfo=None)
+        return v
+
     @validator('code')
     def validate_code(cls, v):
         if not v.strip():
@@ -56,6 +64,7 @@ class CouponUpdate(BaseModel):
     usage_limit: Optional[int] = Field(None, gt=0, description="Maximum number of times coupon can be used")
     valid_from: Optional[datetime] = Field(None, description="Start date and time of coupon validity")
     valid_until: Optional[datetime] = Field(None, description="End date and time of coupon validity")
+    is_active: Optional[bool] = Field(None, description="Whether coupon is active")
 
     @validator('value')
     def validate_value(cls, v):
@@ -67,6 +76,13 @@ class CouponUpdate(BaseModel):
     def validate_usage_limit(cls, v):
         if v is not None and v <= 0:
             raise ValueError('Usage limit must be greater than 0')
+        return v
+
+    @validator('valid_from', 'valid_until')
+    def validate_datetime_timezone(cls, v):
+        """Ensure datetime is timezone-naive for database storage"""
+        if v and v.tzinfo is not None:
+            return v.replace(tzinfo=None)
         return v
 
     @validator('code')
@@ -84,16 +100,18 @@ class CouponOut(CouponBase):
 class CouponValidation(BaseModel):
     code: str = Field(..., description="Coupon code to validate")
     order_total: float = Field(..., gt=0, description="Order total amount")
+    customer_id: Optional[int] = Field(None, description="Customer ID for validation")
 
 class CouponValidationResponse(BaseModel):
-    valid: bool = Field(..., description="Whether coupon is valid")
+    success: bool = Field(..., description="Operation success status")
     message: str = Field(..., description="Validation message")
-    discount_amount: Optional[float] = Field(None, description="Discount amount")
-    final_amount: Optional[float] = Field(None, description="Final amount after discount")
+    data: Optional[dict] = Field(None, description="Validation data")
 
 class CouponList(BaseModel):
     coupons: List[CouponOut] = Field(..., description="List of coupons")
     total: int = Field(..., description="Total number of coupons")
+    skip: int = Field(..., description="Number of coupons skipped")
+    limit: int = Field(..., description="Maximum number of coupons returned")
 
 class ActiveCouponList(BaseModel):
     active_coupons: List[CouponOut] = Field(..., description="List of active coupons")

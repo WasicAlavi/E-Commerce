@@ -14,8 +14,13 @@ const AdsBannerSlider = (props) => {
                 slidesPerView={props.items}
                 navigation={true}
                 spaceBetween={10}
-                // autoplay={{ delay: 2000, disableOnInteraction: false }}
-                // loop={true}
+                autoplay={{ 
+                    delay: 3000, 
+                    disableOnInteraction: false,
+                    pauseOnMouseEnter: true,
+                    waitForTransition: true
+                }}
+                loop={true}
                 modules={[Navigation, Autoplay]}
                 className="mySwiper custom-swiper"
             >

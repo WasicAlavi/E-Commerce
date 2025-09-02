@@ -10,11 +10,11 @@ async def create_wishlist(wishlist_data: WishlistCreate) -> Wishlist:
 
 async def get_wishlist_by_id(wishlist_id: int) -> Optional[Wishlist]:
     """Get wishlist by ID"""
-    return await Wishlist.get_by_id(wishlist_id)
+    return await Wishlist.get_by_id(wishlist_id, include_deleted=False)
 
 async def get_wishlist_by_customer(customer_id: int) -> Optional[Wishlist]:
     """Get wishlist by customer ID"""
-    return await Wishlist.get_by_customer_id(customer_id)
+    return await Wishlist.get_by_customer_id(customer_id, include_deleted=False)
 
 async def get_wishlists(skip: int = 0, limit: int = 100) -> List[Wishlist]:
     """Get all wishlists with pagination"""
@@ -52,11 +52,11 @@ async def add_wishlist_item(item_data: WishlistItemCreate) -> WishlistItem:
 
 async def get_wishlist_item_by_id(item_id: int) -> Optional[WishlistItem]:
     """Get wishlist item by ID"""
-    return await WishlistItem.get_by_id(item_id)
+    return await WishlistItem.get_by_id(item_id, include_deleted=False)
 
 async def get_wishlist_items(wishlist_id: int) -> List[WishlistItem]:
     """Get all items in a wishlist"""
-    return await WishlistItem.get_by_wishlist_id(wishlist_id)
+    return await WishlistItem.get_by_wishlist_id(wishlist_id, include_deleted=False)
 
 async def remove_wishlist_item(item_id: int) -> bool:
     """Remove item from wishlist"""

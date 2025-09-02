@@ -1,9 +1,28 @@
 from typing import List, Optional
 from app.models.review import Review
+from app.models.order_item import OrderItem
 from app.schemas.review import ReviewCreate, ReviewUpdate, ReviewOut
 
 async def create_review(review_data: ReviewCreate) -> Review:
     """Create a new review"""
+    # Check if customer has purchased the product
+    has_purchased = await OrderItem.has_customer_purchased_product(
+        review_data.customer_id, 
+        review_data.product_id
+    )
+    
+    if not has_purchased:
+        raise ValueError("You can only review products you have purchased. Please complete a purchase before leaving a review.")
+    
+    # Check if customer has already reviewed this product
+    existing_review = await Review.get_by_customer_and_product(
+        review_data.customer_id, 
+        review_data.product_id
+    )
+    
+    if existing_review:
+        raise ValueError("You have already reviewed this product. You can only review each product once.")
+    
     return await Review.create(
         customer_id=review_data.customer_id,
         product_id=review_data.product_id,
@@ -17,7 +36,7 @@ async def get_review_by_id(review_id: int) -> Optional[Review]:
 
 async def get_reviews_by_product(product_id: int, skip: int = 0, limit: int = 100) -> List[Review]:
     """Get reviews by product ID"""
-    return await Review.get_by_product_id(product_id, skip=skip, limit=limit)
+    return await Review.get_by_product_id(product_id)
 
 async def get_reviews_by_customer(customer_id: int, skip: int = 0, limit: int = 100) -> List[Review]:
     """Get reviews by customer ID"""
@@ -78,4 +97,34 @@ async def get_recent_reviews(limit: int = 10) -> List[Review]:
 
 async def get_helpful_reviews(product_id: int, limit: int = 10) -> List[Review]:
     """Get most helpful reviews for a product"""
-    return await Review.get_helpful(product_id, limit=limit) 
+    return await Review.get_helpful(product_id, limit=limit)
+
+async def can_customer_review_product(customer_id: int, product_id: int) -> dict:
+    """Check if a customer can review a specific product"""
+    # Check if customer has purchased the product
+    has_purchased = await OrderItem.has_customer_purchased_product(customer_id, product_id)
+    
+    # Check if customer has already reviewed this product
+    existing_review = await Review.get_by_customer_and_product(customer_id, product_id)
+    
+    return {
+        "can_review": has_purchased and not existing_review,
+        "has_purchased": has_purchased,
+        "has_reviewed": existing_review is not None,
+        "existing_review": existing_review.to_dict() if existing_review else None
+    }
+
+async def get_customer_reviewable_products(customer_id: int) -> List[int]:
+    """Get list of product IDs that a customer can review (purchased but not reviewed)"""
+    # Get purchased products
+    purchased_products = await OrderItem.get_customer_purchased_products(customer_id)
+    
+    # Get already reviewed products
+    reviewed_products = []
+    for product_id in purchased_products:
+        existing_review = await Review.get_by_customer_and_product(customer_id, product_id)
+        if existing_review:
+            reviewed_products.append(product_id)
+    
+    # Return products that can be reviewed (purchased but not reviewed)
+    return [pid for pid in purchased_products if pid not in reviewed_products] 

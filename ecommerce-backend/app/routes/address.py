@@ -27,7 +27,9 @@ async def get_address(address_id: int):
 @router.get("/customer/{customer_id}", response_model=List[AddressOut])
 async def get_addresses_by_customer(customer_id: int):
     """Get all addresses for a customer"""
+    print(f"Fetching addresses for customer_id: {customer_id}")
     addresses = await address_crud.get_addresses_by_customer(customer_id)
+    print(f"Found addresses: {addresses}")
     return addresses
 
 @router.put("/{address_id}", response_model=AddressOut)

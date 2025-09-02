@@ -32,35 +32,59 @@ class WishlistItem:
         """Add a product to wishlist"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow("""
-                INSERT INTO wishlist_items (wishlist_id, product_id)
-                VALUES ($1, $2)
-                RETURNING id, wishlist_id, product_id
-            """, wishlist_id, product_id)
-            return cls(**dict(row))
+            try:
+                # Check if wishlist exists
+                wishlist_exists = await conn.fetchval("SELECT EXISTS(SELECT 1 FROM wishlists WHERE id = $1)", wishlist_id)
+                if not wishlist_exists:
+                    raise Exception(f"Wishlist {wishlist_id} does not exist")
+                
+                # Check if product exists
+                product_exists = await conn.fetchval("SELECT EXISTS(SELECT 1 FROM products WHERE id = $1)", product_id)
+                if not product_exists:
+                    raise Exception(f"Product {product_id} does not exist")
+                
+                # First check if the item already exists
+                exists = await cls.check_exists(wishlist_id, product_id)
+                if exists:
+                    raise Exception(f"Product {product_id} already exists in wishlist {wishlist_id}")
+                
+                row = await conn.fetchrow("""
+                    INSERT INTO wishlist_items (wishlist_id, product_id)
+                    VALUES ($1, $2)
+                    RETURNING id, wishlist_id, product_id
+                """, wishlist_id, product_id)
+                
+                if not row:
+                    raise Exception("Failed to create wishlist item")
+                    
+                return cls(**dict(row))
+            except Exception as e:
+                print(f"Error creating wishlist item: {e}")
+                raise e
 
     @classmethod
-    async def get_by_id(cls, item_id: int) -> Optional['WishlistItem']:
-        """Get wishlist item by ID"""
+    async def get_by_id(cls, item_id: int, include_deleted: bool = False) -> Optional['WishlistItem']:
+        """Get wishlist item by ID, excluding deleted by default"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow("""
-                SELECT id, wishlist_id, product_id
-                FROM wishlist_items WHERE id = $1
-            """, item_id)
+            query = "SELECT id, wishlist_id, product_id FROM wishlist_items WHERE id = $1"
+            params = [item_id]
+            if not include_deleted:
+                query += " AND is_deleted = FALSE"
+            row = await conn.fetchrow(query, *params)
             return cls(**dict(row)) if row else None
 
     @classmethod
-    async def get_by_wishlist_id(cls, wishlist_id: int) -> List['WishlistItem']:
-        """Get all items in a wishlist"""
+    async def get_by_wishlist_id(cls, wishlist_id: int, include_deleted: bool = False) -> List['WishlistItem']:
+        """Get all items in a wishlist, excluding deleted by default"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            rows = await conn.fetch("""
-                SELECT id, wishlist_id, product_id
-                FROM wishlist_items 
-                WHERE wishlist_id = $1
-                ORDER BY id
-            """, wishlist_id)
+            query = "SELECT id, wishlist_id, product_id FROM wishlist_items WHERE wishlist_id = $1"
+            params = [wishlist_id]
+            if not include_deleted:
+                query += " AND is_deleted = FALSE"
+            query += " ORDER BY id"
+            rows = await conn.fetch(query, *params)
             return [cls(**dict(row)) for row in rows]
 
     @classmethod
@@ -104,6 +128,18 @@ class WishlistItem:
             return bool(result)
 
     @classmethod
+    async def get_by_wishlist_and_product(cls, wishlist_id: int, product_id: int) -> Optional['WishlistItem']:
+        """Get wishlist item by wishlist_id and product_id"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow("""
+                SELECT id, wishlist_id, product_id
+                FROM wishlist_items 
+                WHERE wishlist_id = $1 AND product_id = $2
+            """, wishlist_id, product_id)
+            return cls(**dict(row)) if row else None
+
+    @classmethod
     async def get_customer_wishlist_products(cls, customer_id: int) -> List[Dict[str, Any]]:
         """Get wishlist products with product details for a customer"""
         pool = await get_db_connection()
@@ -127,22 +163,25 @@ class WishlistItem:
             return [dict(row) for row in rows]
 
     async def delete(self) -> bool:
-        """Remove item from wishlist"""
+        """Soft delete item from wishlist"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            result = await conn.execute("DELETE FROM wishlist_items WHERE id = $1", self.id)
-            return result == "DELETE 1"
+            result = await conn.execute(
+                "UPDATE wishlist_items SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1",
+                self.id
+            )
+            return result.startswith("UPDATE")
 
     @classmethod
     async def remove_from_wishlist(cls, wishlist_id: int, product_id: int) -> bool:
-        """Remove specific product from wishlist"""
+        """Soft delete specific product from wishlist"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            result = await conn.execute("""
-                DELETE FROM wishlist_items 
-                WHERE wishlist_id = $1 AND product_id = $2
-            """, wishlist_id, product_id)
-            return result == "DELETE 1"
+            result = await conn.execute(
+                "UPDATE wishlist_items SET is_deleted = TRUE, deleted_at = NOW() WHERE wishlist_id = $1 AND product_id = $2",
+                wishlist_id, product_id
+            )
+            return result.startswith("UPDATE")
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""

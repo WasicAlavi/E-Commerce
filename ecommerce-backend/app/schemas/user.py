@@ -10,8 +10,9 @@ class UserBase(BaseModel):
     def validate_username(cls, v):
         if not v.strip():
             raise ValueError('Username cannot be empty')
-        if not v.replace('_', '').replace('-', '').isalnum():
-            raise ValueError('Username can only contain letters, numbers, underscores, and hyphens')
+        # Allow spaces and common characters for display names
+        if not v.replace('_', '').replace('-', '').replace(' ', '').isalnum():
+            raise ValueError('Username can only contain letters, numbers, underscores, hyphens, and spaces')
         return v.strip()
 
 class UserCreate(UserBase):
@@ -33,8 +34,9 @@ class UserUpdate(BaseModel):
         if v is not None:
             if not v.strip():
                 raise ValueError('Username cannot be empty')
-            if not v.replace('_', '').replace('-', '').isalnum():
-                raise ValueError('Username can only contain letters, numbers, underscores, and hyphens')
+            # Allow spaces and common characters for display names
+            if not v.replace('_', '').replace('-', '').replace(' ', '').isalnum():
+                raise ValueError('Username can only contain letters, numbers, underscores, hyphens, and spaces')
             return v.strip()
         return v
 

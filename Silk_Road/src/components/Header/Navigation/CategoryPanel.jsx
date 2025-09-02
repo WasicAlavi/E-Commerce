@@ -7,24 +7,66 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import { RiCloseFill } from "react-icons/ri";
 import { CiSquarePlus } from "react-icons/ci";
+import { useNavigate } from 'react-router-dom';
 
 const CategoryPanel = ({ open, openFunc }) => {
-
-
+    const navigate = useNavigate();
     const [openCategory, setOpenCategory] = React.useState(null);
     const [expandedSubcategory, setExpandedSubcategory] = React.useState(null);
     const [categories, setCategories] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
 
+    // Map backend category names to frontend category names
+    const categoryNameMapping = {
+        // Main categories
+        'Fashion': 'Fashion',
+        'Electronics': 'Electronics',
+        'Bags': 'Bags',
+        'Footwear': 'Footwear',
+        'Groceries': 'Groceries',
+        'Beauty': 'Beauty',
+        'Wellness': 'Wellness',
+        'Jewellery': 'Jewellery',
+        
+        // Subcategories - map to their actual names for proper navigation
+        'Smartphones': 'Smartphones',
+        'Laptops': 'Laptops',
+        'Headphones': 'Headphones',
+        'Smartwatches': 'Smartwatches',
+        'Tablets': 'Tablets',
+        'Shoes': 'Shoes',
+        'Cameras': 'Cameras',
+        'Drones': 'Drones',
+        'TVs': 'TVs',
+        'Gaming': 'Gaming',
+        'Accessories': 'Accessories'
+    };
 
-
-    const handleCategoryClick = (categoryId) => {
+    const handleCategoryClick = (categoryId, categoryName) => {
         setOpenCategory((prev) => (prev === categoryId ? null : categoryId));
         setExpandedSubcategory(null);
     };
 
-    const handleSubcategoryClick = (subId) => {
+    const handleSubcategoryClick = (subId, subName) => {
         setExpandedSubcategory((prev) => (prev === subId ? null : subId));
+    };
+
+    const navigateToCategory = (categoryName) => {
+        const mappedName = categoryNameMapping[categoryName] || categoryName;
+        navigate(`/category/${mappedName}`);
+        openFunc(); // Close the panel
+    };
+
+    const navigateToSubcategory = (subName) => {
+        const mappedName = categoryNameMapping[subName] || subName;
+        navigate(`/category/${mappedName}`);
+        openFunc(); // Close the panel
+    };
+
+    const navigateToChildCategory = (childName) => {
+        const mappedName = categoryNameMapping[childName] || childName;
+        navigate(`/category/${mappedName}`);
+        openFunc(); // Close the panel
     };
 
     React.useEffect(() => {
@@ -60,11 +102,20 @@ const CategoryPanel = ({ open, openFunc }) => {
                             <ListItemButton
                                 className="w-full text-[#40513B] hover:bg-[#d4e6c8] transition duration-300 rounded-md"
                                 aria-label={`Expand ${category.name} category`}
-                                onClick={() => handleCategoryClick(category.id)}
+                                onClick={() => handleCategoryClick(category.id, category.name)}
                             >
                                 <ListItemText
-                                    primary={category.name}
-                                    className="pl-3 text-lg font-semibold"
+                                    primary={
+                                        <span 
+                                            className="pl-3 text-lg font-semibold cursor-pointer hover:text-[#9DC08B]"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigateToCategory(category.name);
+                                            }}
+                                        >
+                                            {category.name}
+                                        </span>
+                                    }
                                 />
                                 {category.children && category.children.length > 0 && (
                                     <CiSquarePlus className="text-3xl text-[#40513B] ml-auto" />
@@ -75,15 +126,29 @@ const CategoryPanel = ({ open, openFunc }) => {
                                     {category.children.map(sub => (
                                         <li key={sub.id}>
                                             <div
-                                                onClick={() => handleSubcategoryClick(sub.id)}
+                                                onClick={() => handleSubcategoryClick(sub.id, sub.name)}
                                                 className="cursor-pointer hover:underline flex justify-between items-center text-base"
                                             >
-                                                <span className='text-[17px]'>{sub.name}</span>
+                                                <span 
+                                                    className='text-[17px] cursor-pointer hover:text-[#9DC08B]'
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigateToSubcategory(sub.name);
+                                                    }}
+                                                >
+                                                    {sub.name}
+                                                </span>
                                             </div>
                                             {expandedSubcategory === sub.id && sub.children && sub.children.length > 0 && (
                                                 <ul className="pl-4 mt-2 space-y-1 text-[17px]">
                                                     {sub.children.map(child => (
-                                                        <li key={child.id} className="hover:underline cursor-pointer">{child.name}</li>
+                                                        <li 
+                                                            key={child.id} 
+                                                            className="hover:underline cursor-pointer hover:text-[#9DC08B]"
+                                                            onClick={() => navigateToChildCategory(child.name)}
+                                                        >
+                                                            {child.name}
+                                                        </li>
                                                     ))}
                                                 </ul>
                                             )}

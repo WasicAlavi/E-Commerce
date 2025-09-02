@@ -8,10 +8,9 @@ async def create_address(address_data: AddressCreate) -> Address:
         customer_id=address_data.customer_id,
         street=address_data.street,
         city=address_data.city,
-        state=address_data.state,
+        division=address_data.division,
         country=address_data.country,
-        postal_code=address_data.postal_code,
-        is_default=address_data.is_default
+        postal_code=address_data.postal_code
     )
 
 async def get_address_by_id(address_id: int) -> Optional[Address]:
@@ -36,7 +35,3 @@ async def delete_address(address_id: int) -> bool:
     if not address:
         return False
     return await address.delete()
-
-async def set_default_address(customer_id: int, address_id: int) -> bool:
-    """Set an address as default for a customer"""
-    return await Address.set_default(customer_id, address_id)

@@ -13,7 +13,7 @@ async def create_coupon(coupon_data: CouponCreate) -> Coupon:
         usage_limit=coupon_data.usage_limit,
         valid_from=coupon_data.valid_from,
         valid_until=coupon_data.valid_until,
-        is_active=coupon_data.is_active
+        is_active=coupon_data.is_active if hasattr(coupon_data, 'is_active') else True
     )
 
 async def get_coupon_by_id(coupon_id: int) -> Optional[Coupon]:
@@ -67,8 +67,8 @@ async def validate_coupon(validation_data: CouponValidation) -> dict:
     """Validate a coupon for a customer"""
     return await Coupon.validate_coupon(
         code=validation_data.code,
-        customer_id=validation_data.customer_id,
-        order_amount=validation_data.order_amount
+        customer_id=validation_data.customer_id or 0,  # Default to 0 if not provided
+        order_amount=validation_data.order_total
     )
 
 async def apply_coupon(coupon_code: str, order_amount: float) -> float:

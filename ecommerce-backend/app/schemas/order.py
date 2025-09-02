@@ -5,49 +5,66 @@ from datetime import datetime
 from typing import Optional, List
 from app.schemas.order_item import OrderItemOut 
 
-class OrderBase(BaseModel):
-    total_price: float = Field(..., gt=0, description="Total order price")
-    address_id: int = Field(..., description="Shipping address ID")
-    payment_method_id: Optional[int] = Field(None, description="Payment method ID")
-    coupon_code: Optional[str] = Field(None, description="Applied coupon code")
+class OrderItemBase(BaseModel):
+    product_id: int
+    quantity: int
+    price: float
 
-    @validator('total_price')
-    def validate_total_price(cls, v):
-        if v <= 0:
-            raise ValueError('Total price must be greater than 0')
-        return round(v, 2)
+class OrderItemCreate(OrderItemBase):
+    pass
 
-class OrderCreate(OrderBase):
-    customer_id: int = Field(..., description="Customer ID")
-    items: List[dict] = Field(..., description="List of order items")
-
-class OrderUpdate(BaseModel):
-    total_price: Optional[float] = Field(None, gt=0, description="Total order price")
-    address_id: Optional[int] = Field(None, description="Shipping address ID")
-    payment_method_id: Optional[int] = Field(None, description="Payment method ID")
-    coupon_code: Optional[str] = Field(None, description="Applied coupon code")
-
-    @validator('total_price')
-    def validate_total_price(cls, v):
-        if v is not None and v <= 0:
-            raise ValueError('Total price must be greater than 0')
-        return round(v, 2) if v else v
-
-class OrderOut(OrderBase):
-    id: int = Field(..., description="Order ID")
-    customer_id: int = Field(..., description="Customer ID")
-    order_date: datetime = Field(..., description="Order creation date")
-    status: str = Field(..., description="Order status")
-    items: Optional[List[OrderItemOut]] = Field(default=[], description="List of order items")
+class OrderItemOut(OrderItemBase):
+    id: int
+    order_id: int
+    product_name: Optional[str] = None
+    product_image: Optional[str] = None
 
     class Config:
         from_attributes = True
 
-class OrderWithDetails(OrderOut):
-    customer_name: str = Field(..., description="Customer name")
-    customer_email: str = Field(..., description="Customer email")
-    shipping_address: dict = Field(..., description="Shipping address details")
-    payment_method: Optional[dict] = Field(None, description="Payment method details")
+class OrderBase(BaseModel):
+    customer_id: int
+    total_price: float
+    address_id: int
+    payment_id: Optional[int] = None
+
+class OrderCreate(OrderBase):
+    items: List[OrderItemCreate]
+
+class OrderUpdate(BaseModel):
+    total_price: Optional[float] = None
+    address_id: Optional[int] = None
+    payment_id: Optional[int] = None
+
+class OrderOut(BaseModel):
+    id: int
+    customer_id: int
+    order_date: str
+    total_price: float
+    address_id: int
+    payment_id: Optional[int] = None
+    status: Optional[str] = "Pending"
+    items: List[OrderItemOut] = []
+    secure_order_id: str
+
+    class Config:
+        from_attributes = True
+
+class OrderWithDetails(BaseModel):
+    id: int
+    customer_id: int
+    order_date: str
+    total_price: float
+    address_id: int
+    payment_id: Optional[int] = None
+    status: Optional[str] = "Pending"
+    items: List[OrderItemOut] = []
+    secure_order_id: str
+    address: Optional[dict] = None
+    payment_method: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 class OrderList(BaseModel):
     orders: List[OrderOut] = Field(..., description="List of orders")

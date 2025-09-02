@@ -4,11 +4,12 @@ from app.database import get_db_connection
 
 class CouponRedeem:
     def __init__(self, id: int, coupon_id: int, customer_id: int, 
-                 order_id: int, redeemed_at: datetime):
+                 order_id: int, discount_amount: float, redeemed_at: datetime):
         self.id = id
         self.coupon_id = coupon_id
         self.customer_id = customer_id
         self.order_id = order_id
+        self.discount_amount = discount_amount
         self.redeemed_at = redeemed_at
 
     @classmethod
@@ -22,6 +23,7 @@ class CouponRedeem:
                     coupon_id INTEGER NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
                     customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
                     order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+                    discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
                     redeemed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
             """)
@@ -36,7 +38,7 @@ class CouponRedeem:
 
     @classmethod
     async def create(cls, coupon_id: int, customer_id: int, order_id: int,
-                    redeemed_at: Optional[datetime] = None) -> 'CouponRedeem':
+                    discount_amount: float = 0, redeemed_at: Optional[datetime] = None) -> 'CouponRedeem':
         """Create a new coupon redeem record"""
         if redeemed_at is None:
             redeemed_at = datetime.now()
@@ -44,10 +46,10 @@ class CouponRedeem:
         pool = await get_db_connection()
         async with pool.acquire() as conn:
             row = await conn.fetchrow("""
-                INSERT INTO coupon_redeems (coupon_id, customer_id, order_id, redeemed_at)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id, coupon_id, customer_id, order_id, redeemed_at
-            """, coupon_id, customer_id, order_id, redeemed_at)
+                INSERT INTO coupon_redeems (coupon_id, customer_id, order_id, discount_amount, redeemed_at)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id, coupon_id, customer_id, order_id, discount_amount, redeemed_at
+            """, coupon_id, customer_id, order_id, discount_amount, redeemed_at)
             return cls(**dict(row))
 
     @classmethod
@@ -56,7 +58,7 @@ class CouponRedeem:
         pool = await get_db_connection()
         async with pool.acquire() as conn:
             row = await conn.fetchrow("""
-                SELECT id, coupon_id, customer_id, order_id, redeemed_at
+                SELECT id, coupon_id, customer_id, order_id, discount_amount, redeemed_at
                 FROM coupon_redeems WHERE id = $1
             """, redeem_id)
             return cls(**dict(row)) if row else None
@@ -67,7 +69,7 @@ class CouponRedeem:
         pool = await get_db_connection()
         async with pool.acquire() as conn:
             rows = await conn.fetch("""
-                SELECT id, coupon_id, customer_id, order_id, redeemed_at
+                SELECT id, coupon_id, customer_id, order_id, discount_amount, redeemed_at
                 FROM coupon_redeems 
                 WHERE coupon_id = $1
                 ORDER BY redeemed_at DESC
@@ -80,7 +82,7 @@ class CouponRedeem:
         pool = await get_db_connection()
         async with pool.acquire() as conn:
             rows = await conn.fetch("""
-                SELECT id, coupon_id, customer_id, order_id, redeemed_at
+                SELECT id, coupon_id, customer_id, order_id, discount_amount, redeemed_at
                 FROM coupon_redeems 
                 WHERE customer_id = $1
                 ORDER BY redeemed_at DESC
@@ -93,7 +95,7 @@ class CouponRedeem:
         pool = await get_db_connection()
         async with pool.acquire() as conn:
             row = await conn.fetchrow("""
-                SELECT id, coupon_id, customer_id, order_id, redeemed_at
+                SELECT id, coupon_id, customer_id, order_id, discount_amount, redeemed_at
                 FROM coupon_redeems 
                 WHERE order_id = $1
             """, order_id)
@@ -102,6 +104,19 @@ class CouponRedeem:
     @classmethod
     async def check_customer_coupon_usage(cls, customer_id: int, coupon_id: int) -> bool:
         """Check if customer has already used this coupon"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            result = await conn.fetchval("""
+                SELECT EXISTS(
+                    SELECT 1 FROM coupon_redeems 
+                    WHERE customer_id = $1 AND coupon_id = $2
+                )
+            """, customer_id, coupon_id)
+            return bool(result)
+
+    @classmethod
+    async def check_already_redeemed(cls, coupon_id: int, customer_id: int) -> bool:
+        """Check if customer has already redeemed this coupon"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
             result = await conn.fetchval("""
@@ -134,6 +149,7 @@ class CouponRedeem:
                     cr.id as redeem_id,
                     cr.coupon_id,
                     cr.order_id,
+                    cr.discount_amount,
                     cr.redeemed_at,
                     c.code as coupon_code,
                     c.discount_type,
@@ -159,5 +175,6 @@ class CouponRedeem:
             "coupon_id": self.coupon_id,
             "customer_id": self.customer_id,
             "order_id": self.order_id,
+            "discount_amount": float(self.discount_amount),
             "redeemed_at": self.redeemed_at.isoformat() if self.redeemed_at else None
         }

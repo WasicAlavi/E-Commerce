@@ -42,12 +42,17 @@ class AddressUpdate(BaseModel):
             raise ValueError('Postal code cannot be empty')
         return v.strip() if v else v
 
-class AddressOut(AddressBase):
-    id: int = Field(..., description="Address ID")
+class AddressOut(BaseModel):
+    id: int
+    street: str
+    city: str
+    division: str
+    country: str
+    postal_code: str
     customer_id: int = Field(..., description="ID of the customer")
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class AddressList(BaseModel):
     addresses: List[AddressOut] = Field(..., description="List of addresses")

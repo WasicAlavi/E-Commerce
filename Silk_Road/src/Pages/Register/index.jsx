@@ -116,6 +116,9 @@ const Register = () => {
         setTimeout(() => {
           navigate('/login');
         }, 2000);
+      } else {
+        setAlertMessage(result.error || 'Registration failed');
+        setShowAlert(true);
       }
     } catch (error) {
       setAlertMessage(error.message || 'Registration failed');

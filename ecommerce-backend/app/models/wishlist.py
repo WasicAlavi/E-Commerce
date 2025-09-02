@@ -36,28 +36,28 @@ class Wishlist:
             return cls(**dict(row))
 
     @classmethod
-    async def get_by_id(cls, wishlist_id: int) -> Optional['Wishlist']:
-        """Get wishlist by ID"""
+    async def get_by_id(cls, wishlist_id: int, include_deleted: bool = False) -> Optional['Wishlist']:
+        """Get wishlist by ID, excluding deleted by default"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow("""
-                SELECT id, customer_id
-                FROM wishlists WHERE id = $1
-            """, wishlist_id)
+            query = "SELECT id, customer_id FROM wishlists WHERE id = $1"
+            params = [wishlist_id]
+            if not include_deleted:
+                query += " AND is_deleted = FALSE"
+            row = await conn.fetchrow(query, *params)
             return cls(**dict(row)) if row else None
 
     @classmethod
-    async def get_by_customer_id(cls, customer_id: int) -> Optional['Wishlist']:
-        """Get wishlist for a customer"""
+    async def get_by_customer_id(cls, customer_id: int, include_deleted: bool = False) -> Optional['Wishlist']:
+        """Get wishlist for a customer, excluding deleted by default"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow("""
-                SELECT id, customer_id
-                FROM wishlists 
-                WHERE customer_id = $1
-                ORDER BY id
-                LIMIT 1
-            """, customer_id)
+            query = "SELECT id, customer_id FROM wishlists WHERE customer_id = $1"
+            params = [customer_id]
+            if not include_deleted:
+                query += " AND is_deleted = FALSE"
+            query += " ORDER BY id LIMIT 1"
+            row = await conn.fetchrow(query, *params)
             return cls(**dict(row)) if row else None
 
     @classmethod
@@ -69,15 +69,35 @@ class Wishlist:
         return wishlist
 
     async def delete(self) -> bool:
-        """Delete wishlist"""
+        """Soft delete wishlist"""
         pool = await get_db_connection()
         async with pool.acquire() as conn:
-            result = await conn.execute("DELETE FROM wishlists WHERE id = $1", self.id)
-            return result == "DELETE 1"
+            result = await conn.execute(
+                "UPDATE wishlists SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1",
+                self.id
+            )
+            return result.startswith("UPDATE")
+
+    async def clear_items(self) -> bool:
+        """Clear all items from wishlist"""
+        pool = await get_db_connection()
+        async with pool.acquire() as conn:
+            result = await conn.execute("DELETE FROM wishlist_items WHERE wishlist_id = $1", self.id)
+            return result.startswith("DELETE")
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
             "id": self.id,
-            "customer_id": self.customer_id
+            "customer_id": self.customer_id,
+            "items": []  # Will be populated by get_with_items method
         }
+
+    async def get_with_items(self) -> Dict[str, Any]:
+        """Get wishlist with items"""
+        from app.models.wishlist_item import WishlistItem
+        
+        wishlist_dict = self.to_dict()
+        items = await WishlistItem.get_by_wishlist_id(self.id)
+        wishlist_dict["items"] = [item.to_dict() for item in items]
+        return wishlist_dict
