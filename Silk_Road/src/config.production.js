@@ -1,5 +1,5 @@
 // Production API Configuration
-export const API_BASE_URL = 'https://ecommerce-backend-xxxx.onrender.com/api/v1';
+export const API_BASE_URL = 'https://silk-road-k826.onrender.com/api/v1';
 
 // Production SSLCommerz Configuration
 export const SSLCOMMERZ_CONFIG = {
