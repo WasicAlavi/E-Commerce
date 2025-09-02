@@ -32,7 +32,14 @@ app = FastAPI(title="E-commerce API", version="1.0.0")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:5173", 
+        "http://localhost:3000", 
+        "http://127.0.0.1:5173", 
+        "http://127.0.0.1:3000",
+        "https://your-app-name.netlify.app",  # Replace with your actual Netlify domain
+        "https://*.netlify.app"  # Allow all Netlify subdomains
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],

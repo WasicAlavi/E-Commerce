@@ -1,7 +1,8 @@
 import asyncpg
 from typing import Optional
+from app.config import settings
 
-DATABASE_URL = "postgresql://admin:admin@localhost/mydb"
+DATABASE_URL = settings.DATABASE_URL
 
 # Global connection pool
 pool: Optional[asyncpg.Pool] = None
