@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../../components/ProductCard';
 import { FaFilter, FaSort, FaSearch } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config';
+
 
 const SearchResults = () => {
     const [searchParams] = useSearchParams();
@@ -25,7 +27,7 @@ const SearchResults = () => {
         setError(null);
         
         try {
-            let url = `http://localhost:8000/api/v1/products/card?search=${encodeURIComponent(query)}`;
+            let url = `${API_BASE_URL}/products/card?search=${encodeURIComponent(query)}`;
             
             // Add sorting
             if (sortBy === 'price_low') {

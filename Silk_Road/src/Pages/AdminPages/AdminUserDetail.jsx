@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import {
   Box, Paper, Typography, Button, Card, CardContent, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Chip, CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
@@ -27,7 +28,7 @@ const AdminUserDetail = () => {
     setSelectedOrder(order);
     setModalOpen(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/orders/${order.id}/with-items`);
+      const res = await fetch(`${API_BASE_URL}/orders/${order.id}/with-items`);
       if (res.ok) {
         const data = await res.json();
         setOrderItems(data.data.items || []);
@@ -56,25 +57,25 @@ const AdminUserDetail = () => {
     setError('');
     try {
       // Fetch user details
-      const userRes = await fetch(`http://localhost:8000/api/v1/users/${id}`);
+      const userRes = await fetch(`${API_BASE_URL}/users/${id}`);
       if (!userRes.ok) throw new Error('Failed to fetch user');
       const userData = await userRes.json();
       setUser(userData);
 
       // Fetch customer by user_id
-      const customerRes = await fetch(`http://localhost:8000/api/v1/customers/user/${id}`);
+      const customerRes = await fetch(`${API_BASE_URL}/customers/user/${id}`);
       const customerData = customerRes.ok ? await customerRes.json() : null;
       const customerObj = customerData?.data;
       setCustomer(customerObj);
 
       if (customerObj && customerObj.id) {
         // Fetch addresses
-        const addrRes = await fetch(`http://localhost:8000/api/v1/addresses/customer/${customerObj.id}`);
+        const addrRes = await fetch(`${API_BASE_URL}/addresses/customer/${customerObj.id}`);
         const addrData = addrRes.ok ? await addrRes.json() : [];
         setAddresses(addrData || []);
 
         // Fetch orders
-        const ordersRes = await fetch(`http://localhost:8000/api/v1/orders/customer/${customerObj.id}`);
+        const ordersRes = await fetch(`${API_BASE_URL}/orders/customer/${customerObj.id}`);
         const ordersData = ordersRes.ok ? await ordersRes.json() : { orders: [] };
         setOrders(ordersData.orders || ordersData || []);
       } else {

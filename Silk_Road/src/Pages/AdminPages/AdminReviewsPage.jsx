@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import {
   Box,
   Paper,
@@ -40,7 +41,7 @@ const AdminReviewsPage = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:8000/api/v1/reviews/');
+      const response = await fetch('${API_BASE_URL}/reviews/');
       if (!response.ok) throw new Error('Failed to fetch reviews');
       const data = await response.json();
       setReviews(data.reviews || []);
@@ -48,7 +49,7 @@ const AdminReviewsPage = () => {
       const customerIds = [...new Set((data.reviews || []).map(r => r.customer_id))];
       // Step 3: Fetch all customers in parallel
       const customerPromises = customerIds.map(id =>
-        fetch(`http://localhost:8000/api/v1/customers/${id}`)
+        fetch(`${API_BASE_URL}/customers/${id}`)
           .then(res => res.ok ? res.json() : null)
           .then(data => data?.data ? { id, name: `${data.data.first_name} ${data.data.last_name}` } : { id, name: "Unknown" })
       );

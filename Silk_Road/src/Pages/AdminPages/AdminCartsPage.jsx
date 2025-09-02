@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import {
   Box,
   Paper,
@@ -49,7 +50,7 @@ const AdminCartsPage = () => {
     setError('');
     try {
       const token = authService.getToken();
-      const response = await fetch('http://localhost:8000/api/v1/carts/admin/all', {
+      const response = await fetch(`${API_BASE_URL}/carts/admin/all`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -71,7 +72,7 @@ const AdminCartsPage = () => {
     setItemsLoading(true);
     try {
       const token = authService.getToken();
-      const res = await fetch(`http://localhost:8000/api/v1/carts/${cart.id}/items-with-products`, {
+      const res = await fetch(`${API_BASE_URL}/carts/${cart.id}/items-with-products`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

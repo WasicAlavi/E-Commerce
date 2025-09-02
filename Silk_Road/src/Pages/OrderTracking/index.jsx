@@ -3,6 +3,8 @@ import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import { FaSearch, FaTruck, FaCheckCircle, FaClock, FaBox } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config';
+
 
 const StyledButton = styled(Button)(({ theme }) => ({
   fontFamily: 'Montserrat, sans-serif',
@@ -56,7 +58,7 @@ const OrderTracking = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/orders/track/${orderNumber.trim()}`);
+      const response = await fetch(`${API_BASE_URL}/orders/track/${orderNumber.trim()}`);
       
       if (response.ok) {
         const result = await response.json();

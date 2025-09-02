@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import {
   Box,
   Paper,
@@ -147,7 +148,7 @@ const AdminOrdersPage = () => {
     if (order.status === 'shipped') {
       try {
         const token = authService.getToken();
-        const response = await fetch(`http://localhost:8000/api/v1/admin/orders/${order.id}/delivery-assignment`, {
+        const response = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/delivery-assignment`, {
           headers: {
             'Authorization': token ? `Bearer ${token}` : '',
           },
@@ -256,7 +257,7 @@ const AdminOrdersPage = () => {
         token: token ? 'Present' : 'Missing'
       });
       
-      const url = `http://localhost:8000/api/v1/admin/orders/${selectedOrder.id}/assign-rider`;
+      const url = `${API_BASE_URL}/admin/orders/${selectedOrder.id}/assign-rider`;
       console.log('Request URL:', url);
       console.log('Request method: POST');
       
@@ -365,7 +366,7 @@ const AdminOrdersPage = () => {
         token: token ? 'Present' : 'Missing'
       });
       
-      const url = `http://localhost:8000/api/v1/admin/orders/${selectedOrder.id}/status`;
+      const url = `${API_BASE_URL}/admin/orders/${selectedOrder.id}/status`;
       console.log('Request URL:', url);
       console.log('Request method: PUT');
       console.log('Request headers:', {
@@ -447,7 +448,7 @@ const AdminOrdersPage = () => {
     
     try {
       const token = authService.getToken();
-      const response = await fetch('http://localhost:8000/api/v1/admin/orders', {
+      const response = await fetch('${API_BASE_URL}/admin/orders', {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
         },

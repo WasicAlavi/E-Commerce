@@ -21,6 +21,8 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/thumbs';
 import 'swiper/css/pagination';
+import { API_BASE_URL } from '../../config';
+
 
 const StyledButton = styled(Button)(({ theme }) => ({
   fontFamily: 'Montserrat, sans-serif',
@@ -117,7 +119,7 @@ const ProductDetail = () => {
     async function fetchProduct() {
       try {
         // Fetch full product details including sizes and colors
-        const res = await fetch(`http://localhost:8000/api/v1/products/${id}`);
+        const res = await fetch(`${API_BASE_URL}/products/${id}`);
         const data = await res.json();
         
         // Set product with all details
@@ -159,7 +161,7 @@ const ProductDetail = () => {
       setReviewLoading(true);
       setReviewError(null);
       try {
-        const res = await fetch(`http://localhost:8000/api/v1/reviews/product/${id}`);
+        const res = await fetch(`${API_BASE_URL}/reviews/product/${id}`);
         if (!res.ok) throw new Error('Failed to fetch reviews');
         const data = await res.json();
         setReviews(data.reviews || []);
@@ -179,7 +181,7 @@ const ProductDetail = () => {
     if (!currentUser?.id || !id) return;
     const checkReviewed = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/v1/reviews/check/${currentUser.id}/${id}`);
+        const res = await fetch(`${API_BASE_URL}/reviews/check/${currentUser.id}/${id}`);
         const data = await res.json();
         setHasReviewed(data.data?.exists || false);
       } catch {}
@@ -192,7 +194,7 @@ const ProductDetail = () => {
     if (!currentUser?.customer_id || !id) return;
     const checkPurchaseStatus = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/v1/reviews/check-purchase/${currentUser.customer_id}/${id}`);
+        const res = await fetch(`${API_BASE_URL}/reviews/check-purchase/${currentUser.customer_id}/${id}`);
         const data = await res.json();
         if (data.success) {
           setPurchaseStatus(data.data);
@@ -349,7 +351,7 @@ const ProductDetail = () => {
       return;
     }
     try {
-      const res = await fetch('http://localhost:8000/api/v1/reviews/', {
+      const res = await fetch('${API_BASE_URL}/reviews/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -366,7 +368,7 @@ const ProductDetail = () => {
         const data = await res.json();
         setHasReviewed(true);
         // Refetch reviews
-        const reviewsRes = await fetch(`http://localhost:8000/api/v1/reviews/product/${id}`);
+        const reviewsRes = await fetch(`${API_BASE_URL}/reviews/product/${id}`);
         const reviewsData = await reviewsRes.json();
         setReviews(reviewsData.reviews || []);
         setAverageRating(reviewsData.average_rating || 0);

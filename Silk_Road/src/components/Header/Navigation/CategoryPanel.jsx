@@ -8,6 +8,8 @@ import ListItemText from '@mui/material/ListItemText';
 import { RiCloseFill } from "react-icons/ri";
 import { CiSquarePlus } from "react-icons/ci";
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../../config';
+
 
 const CategoryPanel = ({ open, openFunc }) => {
     const navigate = useNavigate();
@@ -70,7 +72,7 @@ const CategoryPanel = ({ open, openFunc }) => {
     };
 
     React.useEffect(() => {
-        fetch("http://localhost:8000/api/v1/products/tags/tree")
+        fetch("${API_BASE_URL}/products/tags/tree")
             .then(res => res.json())
             .then(data => {
                 setCategories(Array.isArray(data) ? data : []);

@@ -10,6 +10,8 @@ import cartService from '../../services/cartService';
 import compareService from '../../services/compareService';
 import trackingService from '../../services/trackingService';
 import ReactDOM from 'react-dom';
+import { API_BASE_URL } from '../../config';
+
 
 const ProductCard = ({ product }) => {
     const { user } = useAuth();
@@ -28,7 +30,7 @@ const ProductCard = ({ product }) => {
             try {
                 const wishlist = await wishlistService.getOrCreateWishlist();
                 // Check if product exists in wishlist
-                const response = await fetch(`http://localhost:8000/api/v1/wishlists/${wishlist.id}/items/check/${product.id}`);
+                const response = await fetch(`${API_BASE_URL}/wishlists/${wishlist.id}/items/check/${product.id}`);
                 if (response.ok) {
                     const data = await response.json();
                     setIsWishlisted(data.data.exists);

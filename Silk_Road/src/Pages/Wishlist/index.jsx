@@ -8,6 +8,8 @@ import ProductCard from '../../components/ProductCard';
 import Recommendations from '../../components/Recommendations';
 import { useAuth } from '../../AuthContext';
 import authService from '../../services/authService';
+import { API_BASE_URL } from '../../config';
+
 
 const StyledButton = styled(Button)(({ theme }) => ({
   fontFamily: 'Montserrat, sans-serif',
@@ -39,7 +41,7 @@ const Wishlist = () => {
 
       // 1. Get the user's wishlist
       const customerId = user.customer_id || user.id;
-      const wishlistRes = await fetch(`http://localhost:8000/api/v1/wishlists/customer/${customerId}`, {
+      const wishlistRes = await fetch(`${API_BASE_URL}/wishlists/customer/${customerId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -50,7 +52,7 @@ const Wishlist = () => {
       setWishlistId(wishlist.id);
 
       // 2. Get the items for this wishlist
-      const itemsRes = await fetch(`http://localhost:8000/api/v1/wishlists/${wishlist.id}/items`, {
+      const itemsRes = await fetch(`${API_BASE_URL}/wishlists/${wishlist.id}/items`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -60,7 +62,7 @@ const Wishlist = () => {
 
       // 3. Fetch product details for each item
       const productPromises = items.map(item =>
-        fetch(`http://localhost:8000/api/v1/products/card/${item.product_id}`)
+        fetch(`${API_BASE_URL}/products/card/${item.product_id}`)
           .then(res => res.json())
           .then(product => ({
             ...item,
@@ -82,7 +84,7 @@ const Wishlist = () => {
   const removeFromWishlist = async (itemId) => {
     try {
       const token = authService.getToken();
-      const res = await fetch(`http://localhost:8000/api/v1/wishlists/items/${itemId}`, {
+      const res = await fetch(`${API_BASE_URL}/wishlists/items/${itemId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -114,7 +116,7 @@ const Wishlist = () => {
 
       // Get or create cart for user
       const customerId = user.customer_id || user.id;
-      const cartRes = await fetch(`http://localhost:8000/api/v1/carts/customer/${customerId}`, {
+      const cartRes = await fetch(`${API_BASE_URL}/carts/customer/${customerId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -122,7 +124,7 @@ const Wishlist = () => {
       const cartData = await cartRes.json();
       const cart = cartData.data;
       // Add item to cart
-      await fetch(`http://localhost:8000/api/v1/carts/${cart.id}/items`, {
+      await fetch(`${API_BASE_URL}/carts/${cart.id}/items`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -166,7 +168,7 @@ const Wishlist = () => {
 
         // Get wishlist ID
         const customerId = user.customer_id || user.id;
-        const wishlistRes = await fetch(`http://localhost:8000/api/v1/wishlists/customer/${customerId}`, {
+        const wishlistRes = await fetch(`${API_BASE_URL}/wishlists/customer/${customerId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -179,7 +181,7 @@ const Wishlist = () => {
         const wishlist = wishlistData.data;
 
         // Clear wishlist
-        const clearRes = await fetch(`http://localhost:8000/api/v1/wishlists/${wishlist.id}/clear`, {
+        const clearRes = await fetch(`${API_BASE_URL}/wishlists/${wishlist.id}/clear`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

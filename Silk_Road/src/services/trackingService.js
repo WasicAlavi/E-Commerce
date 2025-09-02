@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../config';
+
 // src/services/trackingService.js
 
 class TrackingService {
@@ -269,7 +271,7 @@ class TrackingService {
     async sendTrackingData(eventType, data) {
         const token = localStorage.getItem('token');
         
-        const response = await fetch('http://localhost:8000/api/v1/analytics/track', {
+        const response = await fetch('${API_BASE_URL}/analytics/track', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -314,7 +316,7 @@ class TrackingService {
         try {
             const token = localStorage.getItem('token');
             
-            const response = await fetch('http://localhost:8000/api/v1/analytics/sync-offline', {
+            const response = await fetch('${API_BASE_URL}/analytics/sync-offline', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

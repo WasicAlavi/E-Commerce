@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../../components/ProductCard';
 import { FaFilter, FaSort } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config';
+
 
 const AllProducts = () => {
     const [searchParams] = useSearchParams();
@@ -44,7 +46,7 @@ const AllProducts = () => {
         setError(null);
         
         try {
-            let url = `http://localhost:8000/api/v1/products/card?page=${currentPage}&per_page=${perPage}`;
+            let url = `${API_BASE_URL}/products/card?page=${currentPage}&per_page=${perPage}`;
             
             // Add sorting
             if (sortBy && sortOrder) {

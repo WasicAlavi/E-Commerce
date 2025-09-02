@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import { 
   Card, 
   CardContent, 
@@ -88,9 +89,9 @@ const AdminDashboard = () => {
     
     try {
       // Fetch data that we know works first
-      const orderStatsRes = await fetchDataWithErrorHandling('http://localhost:8000/api/v1/admin/orders/stats', 'Order Stats');
-      const productsRes = await fetchDataWithErrorHandling('http://localhost:8000/api/v1/products/', 'Products');
-      const ordersRes = await fetchDataWithErrorHandling('http://localhost:8000/api/v1/admin/orders', 'Orders');
+      const orderStatsRes = await fetchDataWithErrorHandling(`${API_BASE_URL}/admin/orders/stats`, 'Order Stats');
+      const productsRes = await fetchDataWithErrorHandling(`${API_BASE_URL}/products/`, 'Products');
+      const ordersRes = await fetchDataWithErrorHandling(`${API_BASE_URL}/admin/orders`, 'Orders');
 
       // Try to fetch other data but don't fail if they don't work
       let usersData = [];
@@ -104,7 +105,7 @@ const AdminDashboard = () => {
       };
 
       try {
-        const usersRes = await fetch('http://localhost:8000/api/v1/users/', {
+        const usersRes = await fetch(`${API_BASE_URL}/users/`, {
           headers: authHeaders
         });
         if (usersRes.ok) {
@@ -116,7 +117,7 @@ const AdminDashboard = () => {
       }
 
       try {
-        const reviewsRes = await fetch('http://localhost:8000/api/v1/reviews/', {
+        const reviewsRes = await fetch(`${API_BASE_URL}/reviews/`, {
           headers: authHeaders
         });
         if (reviewsRes.ok) {
@@ -128,7 +129,7 @@ const AdminDashboard = () => {
       }
 
       try {
-        const cartsRes = await fetch('http://localhost:8000/api/v1/carts/', {
+        const cartsRes = await fetch(`${API_BASE_URL}/carts/`, {
           headers: authHeaders
         });
         if (cartsRes.ok) {
@@ -204,7 +205,7 @@ const AdminDashboard = () => {
       // Get auth token using authService
       const token = authService.getToken();
       
-      const res = await fetch('http://localhost:8000/api/v1/admin/orders', {
+      const res = await fetch(`${API_BASE_URL}/admin/orders`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
         }

@@ -1,7 +1,8 @@
 // src/services/advancedAnalyticsService.js
 import authService from './authService';
+import { API_BASE_URL } from '../config';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+
 
 class AdvancedAnalyticsService {
     constructor() {

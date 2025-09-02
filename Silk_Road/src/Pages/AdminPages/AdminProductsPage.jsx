@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import {
   Box,
   Paper,
@@ -116,7 +117,7 @@ const AdminProductsPage = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:8000/api/v1/products/admin/all');
+      const response = await fetch('${API_BASE_URL}/products/admin/all');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -158,7 +159,7 @@ const AdminProductsPage = () => {
 
   const handleProductSave = async (updatedProduct) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/products/${updatedProduct.id}`, {
+      const response = await fetch(`${API_BASE_URL}/products/${updatedProduct.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedProduct)
@@ -197,7 +198,7 @@ const AdminProductsPage = () => {
     }
     
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/products/${productId}`, {
+      const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
         method: 'DELETE'
       });
       

@@ -12,6 +12,8 @@ import cartService from '../../services/cartService';
 import authService from '../../services/authService';
 import AddressSelector from '../../components/AddressSelector';
 import CustomAlert from '../../components/Alert';
+import { API_BASE_URL } from '../../config';
+
 
 const StyledButton = styled(Button)(({ theme }) => ({
   fontFamily: 'Montserrat, sans-serif',
@@ -106,7 +108,7 @@ const Cart = () => {
 
       // 1. Get the user's cart using customer_id
       const customerId = user.customer_id || user.id;
-      const cartRes = await fetch(`http://localhost:8000/api/v1/carts/customer/${customerId}`, {
+      const cartRes = await fetch(`${API_BASE_URL}/carts/customer/${customerId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -118,7 +120,7 @@ const Cart = () => {
       setCartId(cart.id);
 
       // 2. Get the items for this cart
-      const itemsRes = await fetch(`http://localhost:8000/api/v1/carts/${cart.id}/items`, {
+      const itemsRes = await fetch(`${API_BASE_URL}/carts/${cart.id}/items`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -129,7 +131,7 @@ const Cart = () => {
 
       // 3. Fetch product details for each item
       const productPromises = items.map(item =>
-        fetch(`http://localhost:8000/api/v1/products/card/${item.product_id}`)
+        fetch(`${API_BASE_URL}/products/card/${item.product_id}`)
           .then(res => res.json())
           .then(product => ({
             ...item,
@@ -151,7 +153,7 @@ const Cart = () => {
     if (user && user.customer_id) {
       const token = authService.getToken();
       if (token) {
-        fetch(`http://localhost:8000/api/v1/addresses/customer/${user.customer_id}`, {
+        fetch(`${API_BASE_URL}/addresses/customer/${user.customer_id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -166,7 +168,7 @@ const Cart = () => {
     if (newQuantity < 1) return;
     try {
       const token = authService.getToken();
-      const res = await fetch(`http://localhost:8000/api/v1/carts/items/${itemId}/quantity?quantity=${newQuantity}`, {
+      const res = await fetch(`${API_BASE_URL}/carts/items/${itemId}/quantity?quantity=${newQuantity}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -197,7 +199,7 @@ const Cart = () => {
     // Call backend to remove item
     try {
       const token = authService.getToken();
-      const res = await fetch(`http://localhost:8000/api/v1/carts/items/${itemId}`, {
+      const res = await fetch(`${API_BASE_URL}/carts/items/${itemId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -257,7 +259,7 @@ const Cart = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/coupons/validate', {
+      const response = await fetch('${API_BASE_URL}/coupons/validate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import {
+import { API_BASE_URL } from '../../config';
+
   Box,
   TextField,
   Button,
@@ -31,7 +32,7 @@ const CouponInput = ({ orderTotal, onCouponApplied, onCouponRemoved, appliedCoup
     setSuccess('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/coupons/validate', {
+      const response = await fetch('${API_BASE_URL}/coupons/validate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

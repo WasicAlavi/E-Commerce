@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../config';
 import {
   Dialog,
   DialogTitle,
@@ -145,7 +146,7 @@ const ProductForm = ({ onClose, onSuccess }) => {
 
     setCategoryLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/products/categories/suggestions?query=${encodeURIComponent(query)}&limit=15`);
+      const response = await fetch(`${API_BASE_URL}/products/categories/suggestions?query=${encodeURIComponent(query)}&limit=15`);
       if (response.ok) {
         const data = await response.json();
         const apiSuggestions = data.suggestions || [];
@@ -252,7 +253,7 @@ const ProductForm = ({ onClose, onSuccess }) => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/products/', {
+      const response = await fetch('${API_BASE_URL}/products/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

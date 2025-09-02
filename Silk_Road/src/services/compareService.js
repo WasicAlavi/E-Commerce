@@ -1,5 +1,6 @@
+import { API_BASE_URL } from '../config';
+
 // Compare products service
-const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 class CompareService {
   static MAX_COMPARE_ITEMS = 3;

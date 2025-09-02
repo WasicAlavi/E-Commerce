@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../config';
 import {
   Box,
   Paper,
@@ -75,7 +76,7 @@ const AdminCouponsPage = () => {
 
   const fetchCoupons = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/coupons/');
+      const response = await fetch('${API_BASE_URL}/coupons/');
       if (!response.ok) throw new Error('Failed to fetch coupons');
       const data = await response.json();
       setCoupons(data.coupons || []);
@@ -128,8 +129,8 @@ const AdminCouponsPage = () => {
       };
 
       const url = editingCoupon 
-        ? `http://localhost:8000/api/v1/coupons/${editingCoupon.id}`
-        : 'http://localhost:8000/api/v1/coupons/';
+        ? `${API_BASE_URL}/coupons/${editingCoupon.id}`
+        : '${API_BASE_URL}/coupons/';
       
       const method = editingCoupon ? 'PUT' : 'POST';
       
@@ -160,7 +161,7 @@ const AdminCouponsPage = () => {
     if (!window.confirm('Are you sure you want to delete this coupon?')) return;
     
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/coupons/${couponId}`, {
+      const response = await fetch(`${API_BASE_URL}/coupons/${couponId}`, {
         method: 'DELETE'
       });
       
@@ -189,7 +190,7 @@ const AdminCouponsPage = () => {
   const handleViewStats = async (coupon) => {
     setSelectedCoupon(coupon);
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/coupons/${coupon.id}/usage-stats`);
+      const response = await fetch(`${API_BASE_URL}/coupons/${coupon.id}/usage-stats`);
       if (!response.ok) throw new Error('Failed to fetch stats');
       const data = await response.json();
       setCouponStats(data.data);

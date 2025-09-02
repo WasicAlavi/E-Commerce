@@ -12,6 +12,8 @@ import { useAuth } from '../../AuthContext';
 import CustomAlert from '../../components/Alert';
 import RiderRegistration from '../../components/RiderRegistration';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
+
 
 const StyledButton = styled(Button)(({ theme }) => ({
   fontFamily: 'Montserrat, sans-serif',
@@ -125,7 +127,7 @@ const Profile = () => {
   const fetchProfileData = async () => {
     try {
       console.log('Fetching profile for:', user?.customer_id);
-      const response = await fetch(`http://localhost:8000/api/v1/customers/profile/${user.customer_id}`);
+      const response = await fetch(`${API_BASE_URL}/customers/profile/${user.customer_id}`);
       if (response.ok) {
         const data = await response.json();
         console.log('Profile data received:', data);
@@ -153,7 +155,7 @@ const Profile = () => {
   const fetchAddresses = async () => {
     try {
       console.log('Fetching addresses for customer:', user.customer_id);
-      const addressResponse = await fetch(`http://localhost:8000/api/v1/addresses/customer/${user.customer_id}`);
+      const addressResponse = await fetch(`${API_BASE_URL}/addresses/customer/${user.customer_id}`);
       if (addressResponse.ok) {
         const addressData = await addressResponse.json();
         console.log('Addresses received:', addressData);
@@ -170,7 +172,7 @@ const Profile = () => {
   const fetchOrders = async () => {
     setOrdersLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/customers/orders/${user.customer_id}`);
+      const response = await fetch(`${API_BASE_URL}/customers/orders/${user.customer_id}`);
       if (response.ok) {
         const data = await response.json();
         setOrders(data.data || []);
@@ -213,7 +215,7 @@ const Profile = () => {
       
       console.log('Sending profile update:', updateData); // Debug log
       
-      const response = await fetch(`http://localhost:8000/api/v1/customers/profile/${user.customer_id}`, {
+      const response = await fetch(`${API_BASE_URL}/customers/profile/${user.customer_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -236,7 +238,7 @@ const Profile = () => {
 
   const handleAddressUpdate = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/addresses/`, {
+      const response = await fetch(`${API_BASE_URL}/addresses/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -274,7 +276,7 @@ const Profile = () => {
   const handleDeleteAddress = async (addressId) => {
     if (window.confirm('Are you sure you want to delete this address?')) {
       try {
-        const response = await fetch(`http://localhost:8000/api/v1/addresses/${addressId}`, {
+        const response = await fetch(`${API_BASE_URL}/addresses/${addressId}`, {
           method: 'DELETE'
         });
 

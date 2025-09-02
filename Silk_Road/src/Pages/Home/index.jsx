@@ -13,6 +13,8 @@ import Recommendations from '../../components/Recommendations';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import trackingService from '../../services/trackingService';
+import { API_BASE_URL } from '../../config';
+
 
 
 const Home = () => {
@@ -29,7 +31,7 @@ const Home = () => {
 
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/products/tags/tree")
+        fetch("${API_BASE_URL}/products/tags/tree")
             .then(res => res.json())
             .then(data => setCategories(Array.isArray(data) ? data : []));
         
@@ -42,25 +44,25 @@ const Home = () => {
         if (categories.length === 0) return;
         const selectedCategory = categories[value];
         if (!selectedCategory) return;
-        fetch(`http://localhost:8000/api/v1/products/card/by_tag/${selectedCategory.id}`)
+        fetch(`${API_BASE_URL}/products/card/by_tag/${selectedCategory.id}`)
             .then(res => res.json())
             .then(data => setProducts(Array.isArray(data) ? data : []));
     }, [categories, value]);
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/products/card/highest-discounts?limit=8")
+        fetch("${API_BASE_URL}/products/card/highest-discounts?limit=8")
             .then(res => res.json())
             .then(data => setDiscountProducts(Array.isArray(data) ? data : []));
     }, []);
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/products/card/with-coupons?limit=8")
+        fetch("${API_BASE_URL}/products/card/with-coupons?limit=8")
             .then(res => res.json())
             .then(data => setCouponProducts(Array.isArray(data) ? data : []));
     }, []);
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/products/card/best-sellers?limit=8")
+        fetch("${API_BASE_URL}/products/card/best-sellers?limit=8")
             .then(res => res.json())
             .then(data => setBestSellers(Array.isArray(data) ? data : []));
     }, []);
@@ -70,7 +72,7 @@ const Home = () => {
             // Fetch products for ALL categories, not just the first three
             categories.forEach(category => {
                 if (category && category.id) {
-                    fetch(`http://localhost:8000/api/v1/products/card/by_tag/${category.id}?limit=6`)
+                    fetch(`${API_BASE_URL}/products/card/by_tag/${category.id}?limit=6`)
                         .then(res => {
                             if (!res.ok) {
                                 throw new Error(`HTTP error! status: ${res.status}`);
@@ -101,7 +103,7 @@ const Home = () => {
             if (!isLoggedIn || !user?.customer_id) return;
             setForYouLoading(true);
             try {
-                const res = await fetch(`http://localhost:8000/api/v1/products/for_you/${user.customer_id}`);
+                const res = await fetch(`${API_BASE_URL}/products/for_you/${user.customer_id}`);
                 if (res.ok) {
                     const data = await res.json();
                     setForYouProducts(Array.isArray(data) ? data : []);

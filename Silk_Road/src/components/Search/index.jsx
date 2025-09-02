@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { IoSearch } from "react-icons/io5";
 import { Link, useNavigate } from 'react-router-dom';
 import { FaTimes } from "react-icons/fa";
+import { API_BASE_URL } from '../../config';
+
 
 const Search = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -43,7 +45,7 @@ const Search = () => {
     const fetchSuggestions = async (query) => {
         setIsLoading(true);
         try {
-            const response = await fetch(`http://localhost:8000/api/v1/products/search?q=${encodeURIComponent(query)}&limit=8`);
+            const response = await fetch(`${API_BASE_URL}/products/search?q=${encodeURIComponent(query)}&limit=8`);
             if (response.ok) {
                 const data = await response.json();
                 setSuggestions(data);

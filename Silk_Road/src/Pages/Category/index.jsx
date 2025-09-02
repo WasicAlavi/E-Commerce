@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import ProductCard from '../../components/ProductCard';
+import { API_BASE_URL } from '../../config';
+
 
 const Category = () => {
   const { categoryName } = useParams();
@@ -46,7 +48,7 @@ const Category = () => {
           return;
         }
 
-        const response = await fetch(`http://localhost:8000/api/v1/products/card/by_tag/${tagId}`);
+        const response = await fetch(`${API_BASE_URL}/products/card/by_tag/${tagId}`);
         if (response.ok) {
           const data = await response.json();
           setProducts(data);

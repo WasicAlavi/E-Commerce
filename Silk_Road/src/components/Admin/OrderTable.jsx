@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../config';
 import {
   Table,
   TableBody,
@@ -86,7 +87,7 @@ const OrderTable = ({ orders, onOrderUpdate }) => {
     if (order.status === 'shipped') {
       try {
         const token = authService.getToken();
-        const response = await fetch(`http://localhost:8000/api/v1/admin/orders/${order.id}/delivery-assignment`, {
+        const response = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/delivery-assignment`, {
           headers: {
             'Authorization': token ? `Bearer ${token}` : '',
           },
@@ -215,7 +216,7 @@ const OrderTable = ({ orders, onOrderUpdate }) => {
         token: token ? 'Present' : 'Missing'
       });
       
-      const url = `http://localhost:8000/api/v1/admin/orders/${selectedOrder.id}/assign-rider`;
+      const url = `${API_BASE_URL}/admin/orders/${selectedOrder.id}/assign-rider`;
       console.log('Request URL:', url);
       console.log('Request method: POST');
       
@@ -316,7 +317,7 @@ const OrderTable = ({ orders, onOrderUpdate }) => {
       // Get auth token using authService
       const token = authService.getToken();
       
-      const response = await fetch(`http://localhost:8000/api/v1/admin/orders/${selectedOrder.id}/status`, {
+      const response = await fetch(`${API_BASE_URL}/admin/orders/${selectedOrder.id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -392,7 +393,7 @@ const OrderTable = ({ orders, onOrderUpdate }) => {
         requestBody: { status: mappedStatus }
       });
       
-      const response = await fetch(`http://localhost:8000/api/v1/admin/orders/${orderId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

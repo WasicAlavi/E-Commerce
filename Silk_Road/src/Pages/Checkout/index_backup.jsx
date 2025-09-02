@@ -14,6 +14,8 @@ import { useAuth } from '../../AuthContext';
 import cartService from '../../services/cartService';
 import AddressSelector from '../../components/AddressSelector';
 import CustomAlert from '../../components/Alert';
+import { API_BASE_URL } from '../../config';
+
 
 const StyledButton = styled(Button)(({ theme }) => ({
   fontFamily: 'Montserrat, sans-serif',
@@ -158,7 +160,7 @@ const Checkout = () => {
 
   const fetchAddresses = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/addresses/customer/${user.customer_id}`);
+      const response = await fetch(`${API_BASE_URL}/addresses/customer/${user.customer_id}`);
       const data = await response.json();
       if (data.success) {
         setAddresses(data.data);

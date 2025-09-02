@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button as StyledButton } from '@mui/material';
 import { FaCheckCircle, FaArrowLeft, FaHome, FaTruck, FaMapMarkerAlt, FaCreditCard } from 'react-icons/fa';
 import { useAuth } from '../../AuthContext';
+import { API_BASE_URL } from '../../config';
+
 
 const OrderConfirmation = () => {
   const location = useLocation();
@@ -26,7 +28,7 @@ const OrderConfirmation = () => {
 
   const fetchOrderDetails = async (orderId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/orders/${orderId}/with-details`);
+      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/with-details`);
       if (response.ok) {
         const data = await response.json();
         console.log('Order data received:', data);

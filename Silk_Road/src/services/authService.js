@@ -2,11 +2,12 @@
 
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { API_BASE_URL } from '../config';
+
 
 const AUTH_KEY = 'authUser';
 const TOKEN_KEY = 'token';
 const USER_KEY = 'user';
-const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 const authService = {
     // Register new user

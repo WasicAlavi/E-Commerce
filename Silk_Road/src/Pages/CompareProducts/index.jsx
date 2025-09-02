@@ -11,6 +11,8 @@ import wishlistService from '../../services/wishlistService';
 import Recommendations from '../../components/Recommendations';
 import { useAuth } from '../../AuthContext';
 import CustomAlert from '../../components/Alert';
+import { API_BASE_URL } from '../../config';
+
 
 const StyledButton = styled(Button)(({ theme }) => ({
   fontFamily: 'Montserrat, sans-serif',
@@ -115,7 +117,7 @@ const CompareProducts = () => {
 
       const wishlist = await wishlistService.getOrCreateWishlist();
       const payload = { product_id: item.id };
-      const url = `http://localhost:8000/api/v1/wishlists/${wishlist.id}/items`;
+      const url = `${API_BASE_URL}/wishlists/${wishlist.id}/items`;
       
       const res = await fetch(url, {
         method: 'POST',

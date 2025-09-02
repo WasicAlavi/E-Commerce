@@ -1,8 +1,9 @@
 // src/services/cartService.js
 import authService from './authService';
 import trackingService from './trackingService';
+import { API_BASE_URL } from '../config';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+
 
 class CartService {
   // Get or create active cart for current user

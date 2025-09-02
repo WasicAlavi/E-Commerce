@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import { 
   Box, 
   Paper, 
@@ -48,7 +49,7 @@ const AdminUsersPage = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:8000/api/v1/users/');
+      const response = await fetch(`${API_BASE_URL}/users/`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
